@@ -1,3 +1,5 @@
+import {additionalLessons} from './extra-lessons.js';
+import {detailedAnswers} from './detailed-answers.js';
 export const modules = [
   {id:'c', name:'C 语言', icon:'{ }', color:'#3775df', description:'类型、指针、数组与内存安全'},
   {id:'cpp', name:'C++', icon:'C+', color:'#8a63de', description:'对象生命周期与常用语法'},
@@ -840,8 +842,14 @@ add('project','pr-robot','机器人实习：底盘通信与故障定位','P1','�
   ['项目面试中不确定某项指标，应该？',['说明测量条件和自己知道的范围','编一个准确数字','跳过所有技术细节','声称一定正确'],0,'可验证的信息比模糊数字更能说明工作。']
 ]);
 
+lessons.push(...additionalLessons);
+for(const l of lessons)for(const q of l.quiz)if(detailedAnswers[q.id])q.explain=detailedAnswers[q.id];
 export {lessons};
 export const sources = [
+  {name:'C++ 标准草案：虚函数',url:'https://eel.is/c++draft/class.virtual',note:'动态分派与覆盖规则；结合所用 C++ 标准版本学习'},
+  {name:'C++ 标准草案：dynamic_cast',url:'https://eel.is/c++draft/expr.dynamic.cast',note:'运行时类型检查、失败与生命周期前提'},
+  {name:'FreeRTOS Queue 文档',url:'https://www.freertos.org/Documentation/02-Kernel/02-Kernel-features/02-Queues-mutexes-and-semaphores/01-Queues',note:'队列值拷贝与指针消息'},
+  {name:'FreeRTOS 周期延时文档源码',url:'https://github.com/FreeRTOS/FreeRTOS-Website-Content/blob/main/content/en-us/Documentation/02-Kernel/04-API-references/02-Task-control/03-xTaskDelayUntil.md',note:'相对延时、周期唤醒与错过截止时间'},
   {name:'C11 委员会草案 N1570',url:'https://www.open-std.org/jtc1/sc22/wg14/www/docs/n1570.pdf',note:'C 类型、数组、对象与语言行为'},
   {name:'Arm AAPCS32',url:'https://github.com/ARM-software/abi-aa/blob/main/aapcs32/aapcs32.rst',note:'32 位 Arm 调用约定与数据类型'},
   {name:'STM32F407/417 官方文档',url:'https://www.st.com/en/microcontrollers-microprocessors/stm32f407-417/documentation.html',note:'F407 参考手册与数据手册入口'},
