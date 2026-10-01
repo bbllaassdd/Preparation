@@ -1,5 +1,6 @@
 import {additionalLessons} from './extra-lessons.js';
 import {detailedAnswers} from './detailed-answers.js';
+import {beginnerLessons,beginnerPath} from './beginner-lessons.js';
 export const modules = [
   {id:'c', name:'C 语言', icon:'{ }', color:'#3775df', description:'类型、指针、数组与内存安全'},
   {id:'cpp', name:'C++', icon:'C+', color:'#8a63de', description:'对象生命周期与常用语法'},
@@ -15,7 +16,7 @@ export const modules = [
   {id:'project', name:'项目专项', icon:'★', color:'#b56d8e', description:'把知识讲回你的项目'}
 ];
 
-const lessons = [];
+const lessons = beginnerPath.map(id=>beginnerLessons.find(l=>l.id===id));
 function add(module,id,title,level,summary,points,quiz,extra={}) {
   if(quiz.length!==3) throw new Error(`${id}: expected exactly 3 questions`);
   lessons.push({module,id,title,level,summary,points,quiz:quiz.map((q,i)=>({id:`${id}-q${i+1}`,prompt:q[0],options:q[1],answer:q[2],explain:q[3]})),...extra});
@@ -843,6 +844,8 @@ add('project','pr-robot','机器人实习：底盘通信与故障定位','P1','�
 ]);
 
 lessons.push(...additionalLessons);
+const simpleSummaries={'c-types':'先学 sizeof 怎样求字节数，再比较不同平台的常见大小。','c-pointer':'指针保存地址；先读懂 &x、p、*p，再看怎样安全使用。','c-array':'数组存放多个同类型元素，先从下标与整个数组的大小学起。','c-struct':'结构体组合几个具名成员；先会访问成员，再计算存储大小。'};
+for(const l of lessons)if(simpleSummaries[l.id])l.summary=simpleSummaries[l.id];
 for(const l of lessons)for(const q of l.quiz)if(detailedAnswers[q.id])q.explain=detailedAnswers[q.id];
 export {lessons};
 export const sources = [

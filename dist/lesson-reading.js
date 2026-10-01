@@ -1,10 +1,17 @@
 import {tutorials} from './tutorials.js';
 import {walkthroughs,spiWalkthrough} from './walkthroughs.js';
+import {beginnerWalkthroughs} from './beginner-walkthroughs.js';
+import {beginnerExplanation,hasBeginnerNotes} from './beginner-reading.js';
 const E=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 export const tutorialFor=l=>l.tutorial||tutorials[l.id];
-export const walkthroughFor=(l,mode=0)=>l.id==='p-spi'?spiWalkthrough(mode):walkthroughs[l.id];
-export const hasWalkthrough=l=>l.id==='p-spi'||!!walkthroughs[l.id];
-export function explanation(l){const t=tutorialFor(l);if(!t)return '';return `<section class="reasoning" id="why"><h2>01 · 从问题推到结论</h2><h3 class="reason-question">${E(t.question)}</h3><ol class="reason-steps">${t.steps.map((s,i)=>`<li><span class="reason-index">${i+1}</span><p>${E(s)}</p></li>`).join('')}</ol><div class="pitfall"><strong>容易混淆的地方</strong><p>${E(t.trap)}</p></div></section>`;}
+export const walkthroughFor=(l,mode=0)=>l.id==='p-spi'?spiWalkthrough(mode):beginnerWalkthroughs[l.id]||walkthroughs[l.id];
+export const hasWalkthrough=l=>l.id==='p-spi'||!!beginnerWalkthroughs[l.id]||!!walkthroughs[l.id];
+export function explanation(l){
+  const t=tutorialFor(l);if(!t)return beginnerExplanation(l);
+  const steps=`<ol class="reason-steps">${t.steps.map((s,i)=>`<li><span class="reason-index">${i+1}</span><p>${E(s)}</p></li>`).join('')}</ol><div class="pitfall"><strong>容易混淆的地方</strong><p>${E(t.trap)}</p></div>`;
+  if(l.beginner||hasBeginnerNotes(l))return `${beginnerExplanation(l)}<details class="advanced-reasoning" id="why"><summary>从问题推到结论 · 学会例子后再看</summary><h3 class="reason-question">${E(t.question)}</h3>${steps}</details>`;
+  return `${beginnerExplanation(l)}<section class="reasoning" id="why"><h2>01 · 从问题推到结论</h2><h3 class="reason-question">${E(t.question)}</h3>${steps}</section>`;
+}
 export function workedExample(l){const t=tutorialFor(l);if(!t)return '';return `<section id="worked"><h2>推导例题 · 先自己想一遍</h2><div class="worked-example"><p class="worked-prompt">${E(t.worked.prompt)}</p><details class="worked-answer"><summary>查看解析与答案</summary><div><h3>逐步解析</h3><p>${E(t.worked.answer)}</p></div></details></div></section>`;}
 export function relatedReasoning(l){const t=tutorialFor(l);return t?`<details class="quiz-reason"><summary>展开本课原理，重新推导</summary><ol>${t.steps.map(s=>`<li>${E(s)}</li>`).join('')}</ol><p><strong>注意：</strong>${E(t.trap)}</p></details>`:'';}
 function svg(w,f){

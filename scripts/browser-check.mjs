@@ -63,6 +63,22 @@ try{
   await evaluate("document.querySelector('#diagram').scrollIntoView()");
   assert.ok(await evaluate("document.documentElement.scrollWidth <= innerWidth+1"),'no mobile page overflow');
   await capture('array-mobile');
+  await open('c-sizeof',1400,1000);
+  assert.ok(await evaluate("document.querySelector('.basic-reading').textContent.includes('不是普通函数')"));
+  assert.equal(await evaluate("document.querySelector('.advanced-reasoning').open"),false);
+  assert.equal(await evaluate("document.querySelector('.basic-optional').open"),false);
+  await evaluate("document.querySelector('#basics').scrollIntoView()");
+  await capture('sizeof-beginner-desktop');
+  await evaluate("document.querySelector('.basic-optional summary').click()");
+  assert.equal(await evaluate("document.querySelector('.basic-optional').open"),true);
+  await open('c-dereference',390,844);
+  assert.ok(await evaluate("document.documentElement.scrollWidth <= innerWidth+1"),'no beginner mobile page overflow');
+  await evaluate("document.querySelector('#basics').scrollIntoView()");
+  await capture('dereference-beginner-mobile');
+  await open('c-pointer-declare',390,844);
+  assert.ok(await evaluate("document.documentElement.scrollWidth <= innerWidth+1"),'no symbol list mobile overflow');
+  await evaluate("document.querySelector('.symbol-list').scrollIntoView()");
+  await capture('pointer-symbols-mobile');
   // 所有图解帧都无浏览器执行异常，且按钮可用；下面遍历所有课程检查真实 DOM。
   const {lessons}=await import('../dist/content.js');
   for(const l of lessons){
