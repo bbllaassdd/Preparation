@@ -1,7 +1,9 @@
 // Original practice prompts with direct links to related external problems.
 import {additionalChallenges} from './extra-challenges.js';
 import {examChallenges} from './exam-challenges.js';
+import {lessonCoding} from './lesson-coding.js';
 export const challenges = [
+  ...lessonCoding,
   ...examChallenges,
   ...additionalChallenges,
   {id:'reverse-list',lesson:'ds-list',title:'手写：原地反转单链表',level:'入门',kind:'C/C++ 编程',prompt:'实现 reverse(Node *head)，只修改 next 指针，不申请新节点。空链表和单节点也要正确。',cases:['输入：1→2→3→NULL；输出：3→2→1→NULL','输入：NULL；输出：NULL'],hint:'维护 prev、cur 和 next；改 cur->next 前先保存后继。',solution:'Node *reverse(Node *head) {\n    Node *prev = NULL, *cur = head;\n    while (cur != NULL) {\n        Node *next = cur->next;\n        cur->next = prev;\n        prev = cur;\n        cur = next;\n    }\n    return prev;\n}',analysis:'每个节点只访问一次，时间 O(n)；只使用三个指针，额外空间 O(1)。边界是空链表和只有一个节点。',links:[['力扣 206 反转链表','https://leetcode.cn/problems/reverse-linked-list/'],['牛客 BM1 反转链表','https://www.nowcoder.com/practice/75e878df47f24fdc9dc3e400ec6058ca']]},

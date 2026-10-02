@@ -6,6 +6,7 @@ import {walkthroughs,spiWalkthrough} from '../dist/walkthroughs.js';
 import {beginnerPath} from '../dist/beginner-lessons.js';
 import {examChoices,writtenQuestions} from '../dist/exam-bank.js';
 import {createOptionLayouts,optionLetter} from '../dist/question-options.js';
+import {lessonCoding} from '../dist/lesson-coding.js';
 const allQuestions=lessons.flatMap(l=>l.quiz);
 
 assert.equal(new Set(lessons.map(l=>l.id)).size,lessons.length);
@@ -27,6 +28,12 @@ for(const q of writtenQuestions){
  assert.ok(q.answer&&q.steps.length>=3&&q.rubric.length>=2,q.id);
 }
 assert.equal(new Set([...allQuestions,...writtenQuestions,...challenges].map(q=>q.id)).size,allQuestions.length+writtenQuestions.length+challenges.length);
+for(const c of lessonCoding){
+ assert.ok(lessons.some(l=>l.id===c.lesson),c.id);
+ for(const id of c.relatedLessons)assert.ok(lessons.some(l=>l.id===id),id);
+ assert.ok(c.starter&&c.solution&&c.cases.length>=2&&c.steps.length===3);
+}
+for(const l of lessons.filter(l=>l.module==='cpp'))assert.ok(challenges.some(c=>c.lesson===l.id||c.relatedLessons?.includes(l.id)),l.id+' has lesson coding');
 for(const l of lessons){
   const t=tutorialFor(l);assert.ok(t&&t.steps.length===3,`${l.id}: complete reasoning`);
   assert.ok(t.worked.prompt&&t.worked.answer&&t.trap);
@@ -103,7 +110,7 @@ assert.equal(toolResult.correct,true);
 assert.match(page.innerHTML,/正确答案：/);
 
 // Mixed practice filters expose written and coding problems inside each module.
-const change=(id,value)=>docHandlers.change({target:{id,value}});
+const change=(id,value,dataset={})=>docHandlers.change({target:{id,value,dataset}});
 navigate('#/practice/c','专题练习');
 assert.match(page.innerHTML,/三种 \+\+ 与 \* 的结合/);
 assert.match(page.innerHTML,/<details class="written-answer">/);
@@ -130,4 +137,15 @@ click('submit-answer',{id:advanced.id});
 assert.match(page.innerHTML,/回答正确/);
 assert.ok(page.innerHTML.includes('正确答案：'+optionLetter(layouts.get(advanced.id),advanced.answer)));
 assert.ok(page.innerHTML.includes('4、8、8'));
+// New workspace keeps all original basics and exposes coding in the lesson.
+navigate('#/lesson/cpp-copy/coding','手写可深拷贝、可移动的字符串类');
+assert.match(page.innerHTML,/class="coding-workbench"/);
+assert.match(page.innerHTML,/lesson-reading-view" hidden/);
+click('lesson-group',{id:'cpp-copy',value:'basic'});
+assert.match(page.innerHTML,/基础巩固/);
+assert.equal((page.innerHTML.match(/data-action="choose"/g)||[]).length,lessons.find(l=>l.id==='cpp-copy').quiz.length*4);
+click('lesson-group',{id:'cpp-copy',value:'coding'});
+assert.match(page.innerHTML,/代码编辑区/);
+change('lesson-coding-select','lab-deep-text',{lesson:'cpp-copy'});
+assert.match(page.innerHTML,/TinyText/);
 console.log('PASS:',modules.length,'modules,',lessons.length,'lessons,',allQuestions.length,'choices',distribution,'displayed A/B/C/D,',writtenQuestions.length,'written,',challenges.length,'challenges; filters and canonical saved-answer grading.');
