@@ -4,12 +4,29 @@ import {challenges} from '../dist/challenges.js';
 import {tutorialFor,hasWalkthrough,walkthroughFor,renderWalkthrough} from '../dist/lesson-reading.js';
 import {walkthroughs,spiWalkthrough} from '../dist/walkthroughs.js';
 import {beginnerPath} from '../dist/beginner-lessons.js';
+import {examChoices,writtenQuestions} from '../dist/exam-bank.js';
+import {createOptionLayouts,optionLetter} from '../dist/question-options.js';
+const allQuestions=lessons.flatMap(l=>l.quiz);
 
 assert.equal(new Set(lessons.map(l=>l.id)).size,lessons.length);
 assert.deepEqual(lessons.slice(0,beginnerPath.length).map(l=>l.id),beginnerPath);
 assert.equal(lessons.find(l=>l.id==='c-sizeof').quiz[0].answer,1);
 assert.equal(walkthroughFor(lessons.find(l=>l.id==='c-dereference')).frames.at(-1).watch[0][1],'7');
-assert.equal(new Set(lessons.flatMap(l=>l.quiz.map(q=>q.id))).size,lessons.length*3);
+assert.equal(new Set(allQuestions.map(q=>q.id)).size,allQuestions.length);
+assert.equal(allQuestions.length,lessons.length*3+examChoices.length);
+const layouts=createOptionLayouts(allQuestions),distribution=[0,0,0,0];
+for(const q of allQuestions){
+ const order=layouts.get(q.id);
+ assert.deepEqual([...order].sort(),[0,1,2,3]);
+ distribution[order.indexOf(q.answer)]++;
+}
+assert.ok(Math.max(...distribution)-Math.min(...distribution)<=1,'balanced displayed answer positions');
+assert.deepEqual(layouts,createOptionLayouts(allQuestions),'stable options between visits');
+for(const q of writtenQuestions){
+ assert.ok(lessons.some(l=>l.id===q.lesson));
+ assert.ok(q.answer&&q.steps.length>=3&&q.rubric.length>=2,q.id);
+}
+assert.equal(new Set([...allQuestions,...writtenQuestions,...challenges].map(q=>q.id)).size,allQuestions.length+writtenQuestions.length+challenges.length);
 for(const l of lessons){
   const t=tutorialFor(l);assert.ok(t&&t.steps.length===3,`${l.id}: complete reasoning`);
   assert.ok(t.worked.prompt&&t.worked.answer&&t.trap);
@@ -85,4 +102,32 @@ const toolResult=webTools.get('submit_study_answer').execute({questionId:toolQue
 assert.equal(toolResult.correct,true);
 assert.match(page.innerHTML,/正确答案：/);
 
-console.log(`PASS: ${modules.length} modules, ${lessons.length} lesson routes, ${lessons.length*3} questions, ${challenges.length} challenges, answer reveal/review, 3 WebMCP tools.`);
+// Mixed practice filters expose written and coding problems inside each module.
+const change=(id,value)=>docHandlers.change({target:{id,value}});
+navigate('#/practice/c','专题练习');
+assert.match(page.innerHTML,/三种 \+\+ 与 \* 的结合/);
+assert.match(page.innerHTML,/<details class="written-answer">/);
+assert.doesNotMatch(page.innerHTML,/<details class="written-answer" open/);
+change('practice-type','written');
+assert.match(page.innerHTML,/评分点/);
+assert.doesNotMatch(page.innerHTML,/data-action="choose"/);
+change('practice-type','coding');
+assert.match(page.innerHTML,/带溢出检查的十进制解析/);
+change('practice-difficulty','基础');
+change('practice-type','choice');
+assert.match(page.innerHTML,/data-action="choose"/);
+assert.doesNotMatch(page.innerHTML,/quiz-exam-/);
+navigate('#/challenges','手写与场景题');
+change('coding-module','ds');
+assert.match(page.innerHTML,/无重复字节/);
+assert.doesNotMatch(page.innerHTML,/带溢出检查/);
+change('coding-difficulty','挑战');
+assert.match(page.innerHTML,/流式第k大/);
+navigate('#/lesson/c-pointer',lessons.find(l=>l.id==='c-pointer').title);
+const advanced=examChoices[0];
+click('choose',{id:advanced.id,choice:String(advanced.answer)});
+click('submit-answer',{id:advanced.id});
+assert.match(page.innerHTML,/回答正确/);
+assert.ok(page.innerHTML.includes('正确答案：'+optionLetter(layouts.get(advanced.id),advanced.answer)));
+assert.ok(page.innerHTML.includes('4、8、8'));
+console.log('PASS:',modules.length,'modules,',lessons.length,'lessons,',allQuestions.length,'choices',distribution,'displayed A/B/C/D,',writtenQuestions.length,'written,',challenges.length,'challenges; filters and canonical saved-answer grading.');

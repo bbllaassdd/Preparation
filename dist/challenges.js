@@ -1,6 +1,8 @@
 // Original practice prompts with direct links to related external problems.
 import {additionalChallenges} from './extra-challenges.js';
+import {examChallenges} from './exam-challenges.js';
 export const challenges = [
+  ...examChallenges,
   ...additionalChallenges,
   {id:'reverse-list',lesson:'ds-list',title:'手写：原地反转单链表',level:'入门',kind:'C/C++ 编程',prompt:'实现 reverse(Node *head)，只修改 next 指针，不申请新节点。空链表和单节点也要正确。',cases:['输入：1→2→3→NULL；输出：3→2→1→NULL','输入：NULL；输出：NULL'],hint:'维护 prev、cur 和 next；改 cur->next 前先保存后继。',solution:'Node *reverse(Node *head) {\n    Node *prev = NULL, *cur = head;\n    while (cur != NULL) {\n        Node *next = cur->next;\n        cur->next = prev;\n        prev = cur;\n        cur = next;\n    }\n    return prev;\n}',analysis:'每个节点只访问一次，时间 O(n)；只使用三个指针，额外空间 O(1)。边界是空链表和只有一个节点。',links:[['力扣 206 反转链表','https://leetcode.cn/problems/reverse-linked-list/'],['牛客 BM1 反转链表','https://www.nowcoder.com/practice/75e878df47f24fdc9dc3e400ec6058ca']]},
   {id:'binary-search',lesson:'ds-binary',title:'手写：有序数组二分查找',level:'入门',kind:'C/C++ 编程',prompt:'给定递增数组 a 和目标 x，返回任意一个匹配下标；不存在返回 -1。使用闭区间 [l,r]。',cases:['输入：[1,3,5,7]，x=5；输出：2','输入：[]，x=4；输出：-1'],hint:'保持答案可能存在于 [l,r]，使用 l+(r-l)/2 计算中点。',solution:'int search(const int *a, int n, int x) {\n    int l = 0, r = n - 1;\n    while (l <= r) {\n        int mid = l + (r - l) / 2;\n        if (a[mid] == x) return mid;\n        if (a[mid] < x) l = mid + 1;\n        else r = mid - 1;\n    }\n    return -1;\n}',analysis:'每轮将候选范围约减半，时间 O(log n)，额外空间 O(1)。重点测试空数组、首尾元素和不存在。',links:[['力扣 704 二分查找','https://leetcode.cn/problems/binary-search/']]},

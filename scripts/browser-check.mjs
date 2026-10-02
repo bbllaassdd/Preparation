@@ -39,7 +39,7 @@ try{
   };
   await open('c-pointer');
   assert.equal(await evaluate("document.querySelector('.worked-answer').open"),false);
-  assert.equal(await evaluate("!!document.querySelector('.quiz-answer')"),false);
+  assert.equal(await evaluate("!!document.querySelector('.quiz-card:not(.written-card) .quiz-answer')"),false);
   await evaluate("document.querySelector('.worked-answer summary').click()");
   assert.equal(await evaluate("document.querySelector('.worked-answer').open"),true);
   await evaluate("document.querySelector('.worked-answer summary').click()");
@@ -79,6 +79,33 @@ try{
   assert.ok(await evaluate("document.documentElement.scrollWidth <= innerWidth+1"),'no symbol list mobile overflow');
   await evaluate("document.querySelector('.symbol-list').scrollIntoView()");
   await capture('pointer-symbols-mobile');
+  await open('c-pointer',390,844);
+  assert.equal(await evaluate("document.querySelector('.written-answer').open"),false);
+  await evaluate("document.querySelector('.written-answer summary').click();document.querySelector('.written-card').scrollIntoView()");
+  assert.equal(await evaluate("document.querySelector('.written-answer').open"),true);
+  assert.ok(await evaluate("document.documentElement.scrollWidth <= innerWidth+1"),'written mobile fits');
+  await capture('written-exam-mobile');
+  await evaluate("document.querySelector('.written-editor').value='我的推导：a=3,b=6,c=9';document.querySelector('.written-editor').dispatchEvent(new Event('input',{bubbles:true}))");
+  await send('Page.reload');await delay(300);
+  assert.equal(await evaluate("document.querySelector('.written-editor').value"),'我的推导：a=3,b=6,c=9');
+  assert.equal(await evaluate("document.querySelector('.written-answer').open"),false);
+  await evaluate("document.querySelector('#quiz-exam-ptr-post [data-action=choose][data-choice=\"0\"]').click();document.querySelector('#quiz-exam-ptr-post [data-action=submit-answer]').click()");
+  assert.ok(await evaluate("document.querySelector('#quiz-exam-ptr-post').textContent.includes('回答正确')"));
+  const correctLetter=await evaluate("document.querySelector('#quiz-exam-ptr-post .option.correct .letter').textContent");
+  assert.ok(await evaluate("document.querySelector('#quiz-exam-ptr-post .quiz-answer').textContent.includes('正确答案："+correctLetter+"')"));
+  await send('Emulation.setDeviceMetricsOverride',{width:1400,height:1000,deviceScaleFactor:1,mobile:false});
+  await evaluate("location.hash='#/practice/c'");await delay(100);
+  assert.equal(await evaluate("document.querySelector('#practice-module').value"),'c');
+  assert.equal(await evaluate("document.querySelector('#practice-difficulty').value"),'进阶');
+  assert.ok(await evaluate("!!document.querySelector('.written-card') && !!document.querySelector('.challenge-card')"));
+  await capture('mixed-exam-desktop');
+  await evaluate("const s=document.querySelector('#practice-type');s.value='written';s.dispatchEvent(new Event('change',{bubbles:true}))");
+  assert.equal(await evaluate("!!document.querySelector('[data-action=choose]')"),false);
+  await evaluate("location.hash='#/challenge/coding-bounded-atoi'");await delay(100);
+  assert.equal(await evaluate("document.querySelector('#challenge-solution').hidden"),true);
+  await evaluate("document.querySelector('[data-action=solution]').click()");
+  assert.equal(await evaluate("document.querySelector('#challenge-solution').hidden"),false);
+  assert.ok(await evaluate("document.querySelector('#challenge-solution').textContent.includes('INT32_MIN')"));
   // 所有图解帧都无浏览器执行异常，且按钮可用；下面遍历所有课程检查真实 DOM。
   const {lessons}=await import('../dist/content.js');
   for(const l of lessons){
