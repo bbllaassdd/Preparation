@@ -52,8 +52,10 @@ try{
   assert.ok(await evaluate("['.lesson-reading-view','#quiz','#written','#coding'].every(s=>document.querySelector(s).checkVisibility())"),'knowledge and exercises visible together');
   await evaluate("window.scrollTo(0,0)");await capture('lesson-flow-desktop');
   await evaluate("document.querySelector('#worked').scrollIntoView()");await capture('lesson-example-to-exercises');
-  await evaluate("document.querySelector('[data-scroll=exercises]').click()");await delay(400);
-  assert.ok(await evaluate("Math.abs(document.querySelector('#exercises').getBoundingClientRect().top-85)<5"),'TOC locates same-page exercises');
+  assert.equal(await evaluate("document.querySelectorAll('[data-scroll=exercises],[data-scroll=coding]').length"),0,'no jump controls for lesson exercises');
+  assert.ok(await evaluate("document.querySelector('[data-knowledge=basics]').nextElementSibling.id==='exercises'"),'basic questions immediately follow knowledge');
+  assert.ok(await evaluate("document.querySelector('#quiz').closest('article')===document.querySelector('#worked').closest('article')"),'practice embedded in article');
+  await evaluate("document.querySelector('#exercises').scrollIntoView()");await capture('inline-practice-desktop');
 
   await open('ds-list');
   await evaluate("for(let i=0;i<30;i++)document.querySelector('[data-action=walk-next]').click(); document.querySelector('#diagram').scrollIntoView()");
@@ -238,7 +240,7 @@ try{
     await evaluate(`location.hash='#/lesson/${l.id}'`);await delay(10);
     assert.equal(await evaluate("document.querySelector('.worked-answer').open"),false,l.id);
     assert.ok(await evaluate("document.querySelector('.lesson-reading-view').checkVisibility() && document.querySelector('#exercises').checkVisibility()"),l.id+' combined page');
-    assert.ok(await evaluate("document.querySelector('#worked').compareDocumentPosition(document.querySelector('#exercises')) & Node.DOCUMENT_POSITION_FOLLOWING"),l.id+' lesson order');
+    assert.ok(await evaluate("document.querySelector('[data-knowledge=basics]').nextElementSibling.id==='exercises'"),l.id+' knowledge directly followed by practice');
 
   }
   assert.deepEqual(errors,[]);
