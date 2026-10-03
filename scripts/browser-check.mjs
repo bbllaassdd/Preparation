@@ -181,6 +181,47 @@ try{
   assert.ok(await evaluate("document.querySelector('.workbench-editor').value.includes('longest_valley')"));
   await evaluate("document.querySelector('[data-action=solution]').click()");
   assert.ok(await evaluate("document.querySelector('#challenge-solution').textContent.includes('down')"));
+  await send('Page.navigate',{url:'http://127.0.0.1:'+port+'/#/companies'});
+  for(let i=0;i<50;i++){if(await evaluate("!!document.querySelector('.apply-company')"))break;await delay(100);}
+  await evaluate("localStorage.removeItem('embedded-applications-v1')");
+  await send('Page.reload');await delay(300);
+  assert.equal(await evaluate("document.querySelectorAll('.apply-company').length"),15);
+  const ids=await evaluate("[...document.querySelectorAll('.apply-company')].map(b=>b.dataset.id)");
+  const firstId=ids[0];
+  assert.equal(await evaluate("document.querySelector('.apply-official').target"),'_blank');
+  await evaluate("document.querySelector('[data-rec-note]').value='<script>window.bad=1</script>';document.querySelector('[data-rec-note]').dispatchEvent(new Event('input',{bubbles:true}))");
+  await evaluate("document.querySelector('[data-rec-status]').value='已投递';document.querySelector('[data-rec-status]').dispatchEvent(new Event('change',{bubbles:true}))");
+  await send('Page.reload');await delay(300);
+  assert.deepEqual(await evaluate("[...document.querySelectorAll('.apply-company')].map(b=>b.dataset.id)"),ids);
+  assert.equal(await evaluate("document.querySelector('[data-rec-note]').value"),'<script>window.bad=1</script>');
+  assert.equal(await evaluate("document.querySelector('[data-rec-status]').value"),'已投递');
+  assert.equal(await evaluate("window.bad||0"),0,'notes do not execute');
+  await evaluate("document.querySelector('[data-rec=undo-applied]').click()");
+  assert.equal(await evaluate("document.querySelector('[data-rec-status]').value"),'待投递');
+  await evaluate("document.querySelector('[data-rec-status]').value='暂不合适';document.querySelector('[data-rec-status]').dispatchEvent(new Event('change',{bubbles:true}));document.querySelector('[data-rec=fill]').click()");
+  assert.ok(!(await evaluate("[...document.querySelectorAll('.apply-company')].map(b=>b.dataset.id)")).includes(firstId));
+  await evaluate("document.querySelector('[data-rec-status]').value='暂不合适';document.querySelector('[data-rec-status]').dispatchEvent(new Event('change',{bubbles:true}));document.querySelector('[data-rec=fill]').click()");
+  await evaluate("document.querySelector('[data-rec=mode][data-value=all]').click();document.querySelector('[name=query]').value='汇川技术';document.querySelector('#application-search').dispatchEvent(new Event('submit',{bubbles:true,cancelable:true}))");
+  assert.equal(await evaluate("document.querySelectorAll('.apply-company').length"),1,'company search');
+  await evaluate("document.querySelector('[data-rec=add-today]').click()");
+  assert.ok(await evaluate("document.querySelector('.apply-message').textContent.includes('勾选')"));
+  await evaluate("document.querySelector('[data-rec-confirm]').checked=true;document.querySelector('[data-rec-confirm]').dispatchEvent(new Event('change',{bubbles:true}));document.querySelector('[data-rec=add-today]').click()");
+  assert.ok(await evaluate("document.querySelector('.apply-message').textContent.includes('已加入')"));
+  assert.ok(await evaluate("JSON.parse(localStorage.getItem('embedded-applications-v1')).days[Object.keys(JSON.parse(localStorage.getItem('embedded-applications-v1')).days).at(-1)].length===15"));
+  // Restore a genuine backup through the file-input flow, including daily plan.
+  const chosen=await evaluate("document.querySelector('[data-rec-note]').dataset.recNote");
+  await evaluate("window.confirm=()=>true;{const dt=new DataTransfer();const day=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Shanghai',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());const id="+JSON.stringify(chosen)+";dt.items.add(new File([JSON.stringify({type:'embedded-applications',version:1,records:{[id]:{status:'待投递',confirmed:true,note:'恢复后的备注'}},days:{[day]:[id]}})],'backup.json',{type:'application/json'}));const input=document.querySelector('#application-import');input.files=dt.files;input.dispatchEvent(new Event('change',{bubbles:true}));}");
+  await delay(150);
+  assert.equal(await evaluate("document.querySelector('[data-rec-note]').value"),'恢复后的备注');
+  assert.ok(await evaluate("document.querySelector('.apply-message').textContent.includes('已恢复')"));
+  await evaluate("document.querySelector('[name=query]').value='';document.querySelector('#application-search').dispatchEvent(new Event('submit',{bubbles:true,cancelable:true}));document.querySelector('[data-rec=mode][data-value=today]').click();document.querySelector('#recruitment-root').scrollIntoView()");
+  await send('Emulation.setDeviceMetricsOverride',{width:1440,height:1000,deviceScaleFactor:1,mobile:false});await delay(80);
+  assert.ok(await evaluate("document.querySelector('.apply-detail').getBoundingClientRect().left>document.querySelector('.apply-list').getBoundingClientRect().right"),'desktop panels beside each other');
+  await capture('applications-desktop');
+  await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});await delay(200);
+  assert.ok(await evaluate("document.documentElement.scrollWidth<=innerWidth+1"),'application mobile fits');
+  await capture('applications-mobile');
+
   // 所有图解帧都无浏览器执行异常，且按钮可用；下面遍历所有课程检查真实 DOM。
   const {lessons}=await import('../dist/content.js');
   for(const l of lessons){
