@@ -76,7 +76,8 @@ globalThis.localStorage={getItem:key=>memory.get(key)||null,setItem:(key,value)=
 globalThis.location={hash:'#/home'};
 globalThis.history={replaceState:()=>{}};
 globalThis.window={scrollY:0,scrollTo:()=>{},addEventListener:(type,fn)=>winHandlers[type]=fn};
-globalThis.document={querySelector:selector=>selector==='#app'?app:selector==='#page-content'?page:null,addEventListener:(type,fn)=>docHandlers[type]=fn,modelContext:{registerTool:tool=>webTools.set(tool.name,tool)}};
+const sectionVisits=[];
+globalThis.document={getElementById:id=>({scrollIntoView:()=>sectionVisits.push(id)}),querySelector:selector=>selector==='#app'?app:selector==='#page-content'?page:null,addEventListener:(type,fn)=>docHandlers[type]=fn,modelContext:{registerTool:tool=>webTools.set(tool.name,tool)}};
 await import('../dist/app.js');
 assert.match(page.innerHTML,/知识地图/);
 assert.match(page.innerHTML,/不认识 sizeof、&(?:amp;)?、\*？/);
@@ -153,15 +154,24 @@ click('submit-answer',{id:advanced.id});
 assert.match(page.innerHTML,/回答正确/);
 assert.ok(page.innerHTML.includes('正确答案：'+optionLetter(layouts.get(advanced.id),advanced.answer)));
 assert.ok(page.innerHTML.includes('4、8、8'));
-// New workspace keeps all original basics and exposes coding in the lesson.
+// Legacy coding links locate exercises within the complete lesson.
 navigate('#/lesson/cpp-copy/coding','手写可深拷贝、可移动的字符串类');
 assert.match(page.innerHTML,/class="coding-workbench"/);
-assert.match(page.innerHTML,/lesson-reading-view" hidden/);
-click('lesson-group',{id:'cpp-copy',value:'basic'});
+assert.equal(sectionVisits.at(-1),'coding');
+assert.doesNotMatch(page.innerHTML,/lesson-reading-view" hidden|data-action="lesson-view"|data-action="lesson-group"/);
 assert.match(page.innerHTML,/基础巩固/);
 assert.equal((page.innerHTML.match(/data-action="choose"/g)||[]).length,lessons.find(l=>l.id==='cpp-copy').quiz.length*4);
-click('lesson-group',{id:'cpp-copy',value:'coding'});
+assert.ok(page.innerHTML.indexOf('id="worked"')<page.innerHTML.indexOf('id="exercises"'));
+assert.ok(page.innerHTML.indexOf('id="exercises"')<page.innerHTML.indexOf('id="coding"'));
 assert.match(page.innerHTML,/代码编辑区/);
 change('lesson-coding-select','lab-deep-text',{lesson:'cpp-copy'});
 assert.match(page.innerHTML,/TinyText/);
+navigate('#/lesson/c-pointer/practice','随堂练习');
+assert.equal(sectionVisits.at(-1),'exercises');
+assert.match(page.innerHTML,/id="quiz" class="exercise-group"/);
+assert.match(page.innerHTML,/id="written" class="exercise-group"/);
+navigate('#/review','错题复习');
+click('review-reset',{id:advanced.id});
+winHandlers.hashchange();
+assert.equal(sectionVisits.at(-1),'quiz-'+advanced.id);
 console.log('PASS:',modules.length,'modules,',lessons.length,'lessons,',allQuestions.length,'choices',distribution,'displayed A/B/C/D,',writtenQuestions.length,'written,',challenges.length,'challenges; filters and canonical saved-answer grading.');

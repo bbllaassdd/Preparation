@@ -65,4 +65,4 @@ function section(s){
  return s.optional?`<details class="basic-optional"><summary>学会基本写法后，再看：${E(s.title)}</summary>${body}</details>`:`<section class="basic-block">${body}</section>`;
 }
 export function beginnerExplanation(l){const data=l.basics||notes[l.id];return data?`${prerequisiteLinks(l)}<section id="basics" class="basic-reading"><h2>从最小例子学起</h2><p class="basic-goal">这一课先弄懂：${E(data.goal)}</p>${data.sections.map(section).join('')}</section>`:prerequisiteLinks(l);}
-export function beginnerSequence(l){if(!l.beginner)return '';const i=beginnerPath.indexOf(l.id);return `<nav class="beginner-sequence" aria-label="入门课程学习顺序"><span>入门 ${i+1} / ${beginnerPath.length}</span>${i>0?link(beginnerPath[i-1]):''}${i<beginnerPath.length-1?link(beginnerPath[i+1]):'<a href="#/lesson/c-types">继续：类型大小与笔试规则</a>'}</nav>`;}
+export function beginnerSequence(l){if(!l.beginner)return '';const i=beginnerPath.indexOf(l.id);return `<div class="beginner-sequence"><span>C 入门 · 第 ${i+1} / ${beginnerPath.length} 课</span></div>`;}

@@ -48,6 +48,13 @@ try{
   await evaluate("document.querySelector('[data-action=walk-reset]').click(); document.querySelector('#diagram').scrollIntoView()");
   const capture=async name=>{const r=await send('Page.captureScreenshot',{format:'png'});fs.writeFileSync(path.join(out,name+'.png'),Buffer.from(r.data,'base64'));};
   await capture('pointer-desktop');
+  assert.equal(await evaluate("document.querySelectorAll('[data-action=lesson-view],[data-action=lesson-group]').length"),0);
+  assert.ok(await evaluate("['.lesson-reading-view','#quiz','#written','#coding'].every(s=>document.querySelector(s).checkVisibility())"),'knowledge and exercises visible together');
+  await evaluate("window.scrollTo(0,0)");await capture('lesson-flow-desktop');
+  await evaluate("document.querySelector('#worked').scrollIntoView()");await capture('lesson-example-to-exercises');
+  await evaluate("document.querySelector('[data-scroll=exercises]').click()");await delay(400);
+  assert.ok(await evaluate("Math.abs(document.querySelector('#exercises').getBoundingClientRect().top-85)<5"),'TOC locates same-page exercises');
+
   await open('ds-list');
   await evaluate("for(let i=0;i<30;i++)document.querySelector('[data-action=walk-next]').click(); document.querySelector('#diagram').scrollIntoView()");
   assert.ok(await evaluate("document.querySelector('.walk-status').textContent.includes('返回新链头')"));
@@ -80,8 +87,8 @@ try{
   await evaluate("document.querySelector('.symbol-list').scrollIntoView()");
   await capture('pointer-symbols-mobile');
   await open('c-pointer',390,844);
-  await evaluate("document.querySelector('[data-action=lesson-view][data-value=practice]').click();document.querySelector('[data-action=lesson-group][data-value=advanced]').click()");
-  assert.equal(await evaluate("document.querySelector('.lesson-reading-view').hidden"),true);
+  await evaluate("document.querySelector('#written').scrollIntoView()");
+  assert.equal(await evaluate("document.querySelector('.lesson-reading-view').hidden"),false);
   assert.equal(await evaluate("document.querySelector('#written').hidden"),false);
   assert.equal(await evaluate("document.querySelector('.written-answer').open"),false);
   await evaluate("document.querySelector('.written-answer summary').click();document.querySelector('.written-card').scrollIntoView()");
@@ -90,7 +97,7 @@ try{
   await capture('written-exam-mobile');
   await evaluate("document.querySelector('.written-editor').value='我的推导：a=3,b=6,c=9';document.querySelector('.written-editor').dispatchEvent(new Event('input',{bubbles:true}))");
   await send('Page.reload');await delay(300);
-  await evaluate("document.querySelector('[data-action=lesson-view][data-value=practice]').click();document.querySelector('[data-action=lesson-group][data-value=advanced]').click()");
+  await evaluate("document.querySelector('#written').scrollIntoView()");
   assert.equal(await evaluate("document.querySelector('.written-editor').value"),'我的推导：a=3,b=6,c=9');
   assert.equal(await evaluate("document.querySelector('.written-answer').open"),false);
   await evaluate("document.querySelector('#quiz-exam-ptr-post [data-action=choose][data-choice=\"0\"]').click();document.querySelector('#quiz-exam-ptr-post [data-action=submit-answer]').click()");
@@ -111,7 +118,7 @@ try{
   assert.equal(await evaluate("document.querySelector('#challenge-solution').hidden"),false);
   assert.ok(await evaluate("document.querySelector('#challenge-solution').textContent.includes('INT32_MIN')"));
   await open('c-pointer',1440,1000);
-  await evaluate("document.querySelector('[data-action=lesson-view][data-value=practice]').click();document.querySelector('[data-action=lesson-group][data-value=coding]').click()");
+  await evaluate("document.querySelector('#coding').scrollIntoView()");
   assert.equal(await evaluate("document.querySelector('#coding').hidden"),false);
   assert.equal(await evaluate("document.querySelector('.lesson-practice-view').hidden"),false);
   assert.equal(await evaluate("document.querySelector('#challenge-solution').hidden"),true);
@@ -124,10 +131,10 @@ try{
   assert.ok(await evaluate("document.querySelector('.workbench-editor').value.includes('swap_int')"));
   await evaluate("{const s=document.querySelector('#lesson-coding-select');s.value='lab-buffer-move';s.dispatchEvent(new Event('change',{bubbles:true}));}");
   assert.equal(await evaluate("document.querySelector('.workbench-editor').value"),'// QA draft: preserve buffer bounds');
-  await evaluate("document.querySelector('[data-action=lesson-group][data-value=basic]').click()");
+
   assert.equal(await evaluate("document.querySelector('#quiz').hidden"),false);
   assert.equal(await evaluate("document.querySelectorAll('#quiz .quiz-card').length"),3,'all original basics retained');
-  await evaluate("document.querySelector('[data-action=lesson-group][data-value=coding]').click();window.scrollTo(0,0)");
+  await evaluate("document.querySelector('#coding').scrollIntoView()");
   await capture('coding-lesson-desktop');
   await evaluate("location.hash='#/challenge/lab-buffer-move'");await delay(100);
   assert.equal(await evaluate("document.querySelector('.workbench-editor').value"),'// QA draft: preserve buffer bounds');
@@ -139,7 +146,7 @@ try{
   await evaluate("document.querySelector('[data-action=download-code]').click()");await delay(300);
   assert.equal(fs.readFileSync(path.join(downloadDir,'lab-buffer-move.c'),'utf8'),'// QA draft: preserve buffer bounds');
   await open('cpp-copy',1440,1000);
-  await evaluate("document.querySelector('[data-action=lesson-view][data-value=practice]').click()");
+  await evaluate("document.querySelector('#coding').scrollIntoView()");
   assert.ok(await evaluate("document.querySelector('.workbench-editor').value.includes('TinyText')"));
   await capture('cpp-coding-desktop');
   await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});
@@ -179,6 +186,9 @@ try{
   await evaluate("location.hash='#/lesson/ds-valley-longest/coding'");await delay(100);
   assert.equal(await evaluate("document.querySelector('#challenge-solution').hidden"),true);
   assert.ok(await evaluate("document.querySelector('.workbench-editor').value.includes('longest_valley')"));
+  assert.equal(await evaluate("document.querySelector('.lesson-reading-view').hidden"),false);
+  assert.ok(await evaluate("Math.abs(document.querySelector('#coding').getBoundingClientRect().top-85)<5"),'legacy coding link locates the same-page workbench');
+
   await evaluate("document.querySelector('[data-action=solution]').click()");
   assert.ok(await evaluate("document.querySelector('#challenge-solution').textContent.includes('down')"));
   await send('Page.navigate',{url:'http://127.0.0.1:'+port+'/#/companies'});
@@ -227,6 +237,9 @@ try{
   for(const l of lessons){
     await evaluate(`location.hash='#/lesson/${l.id}'`);await delay(10);
     assert.equal(await evaluate("document.querySelector('.worked-answer').open"),false,l.id);
+    assert.ok(await evaluate("document.querySelector('.lesson-reading-view').checkVisibility() && document.querySelector('#exercises').checkVisibility()"),l.id+' combined page');
+    assert.ok(await evaluate("document.querySelector('#worked').compareDocumentPosition(document.querySelector('#exercises')) & Node.DOCUMENT_POSITION_FOLLOWING"),l.id+' lesson order');
+
   }
   assert.deepEqual(errors,[]);
   console.log(`PASS browser: ${lessons.length} lessons, hidden/revealed worked answers, step/reset, 4 SPI modes, mobile overflow. Screenshots: ${out}`);

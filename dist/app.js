@@ -19,7 +19,7 @@ const letter=(q,index)=>optionLetter(optionLayouts.get(q.id),index);
 const app=document.querySelector('#app');
 let state=loadState();
 let route='home',routeArg='',searchTerm='',practiceModule='all',practiceLimit=12,showOnlyDue=false,practiceDifficulty='进阶',practiceType='all',codingModule='all',codingDifficulty='all';
-let lessonView={},lessonLevel={},lessonCodeChoice={};
+let lessonCodeChoice={};
 let visualStep={},spiMode=0,mobileOpen=false,mock=null,mockTimer=null;
 
 function loadState(){
@@ -38,11 +38,14 @@ const moduleUrl=id=>`#/module/${id}`;
 function setRoute(){
   const h=decodeURIComponent(location.hash.replace(/^#\/?/,''))||'home';
   const parts=h.split('/');route=parts[0]||'home';routeArg=parts[1]||'';
-  if(route==='lesson'&&['practice','coding'].includes(parts[2])){lessonView[routeArg]='practice';if(parts[2]==='coding')lessonLevel[routeArg]='coding';}
   if(!['home','module','lesson','practice','review','mock','challenges','challenge','sources','search','companies'].includes(route)) route='home';
   if(route==='lesson'&&lessonById[routeArg]){state.lastLesson=routeArg;saveState();}
   if(route==='practice'&&moduleById[routeArg]){practiceModule=routeArg;practiceLimit=12;}
   mobileOpen=false;render();window.scrollTo(0,0);
+  if(route==='lesson'){
+    const section=parts[2]==='practice'?'exercises':parts[2]==='coding'?'coding':parts[2]?.startsWith('quiz-')?parts[2]:null;
+    if(section)document.getElementById(section)?.scrollIntoView({block:'start'});
+  }
 }
 function toast(message){document.querySelector('.toast')?.remove();const t=document.createElement('div');t.className='toast';t.textContent=message;document.body.append(t);setTimeout(()=>t.remove(),3400);}
 function currentTitle(){
@@ -67,7 +70,7 @@ function homePage(){
  const next=lessons.find(l=>!state.completed[l.id])||lessons[0],resume=lessonById[state.lastLesson]||next;
  return `<header class="work-home"><div><div class="eyebrow">MCU · C / C++ · FREERTOS</div><h1>嵌入式学习工作台</h1><p>看懂一个知识点，再亲手写出它。基础题、笔试题与编程题按课程整理。</p></div><div class="home-actions"><a class="btn primary" href="${lessonUrl(resume.id)}">继续学习 →</a><a class="btn ghost" href="#/practice">打开题库</a><a class="btn ghost" href="#/companies">今日投递 →</a></div></header>
  <div class="home-statline"><span><b>${lessons.length}</b> 节课程</span><span><b>${challenges.length}</b> 道编程与场景题</span><span><b>${completedCount()}</b> 课已完成</span><span><b>${dueCount()}</b> 道错题待复习</span></div>
- <section class="training-routes" aria-label="开始练习"><div class="training-route"><span>01 / C LANGUAGE</span><h2>从指针到内存</h2><p>数组、字符串、结构体与回调；把指针推演写成真正的函数。</p><a class="btn soft" href="#/lesson/c-pointer/coding">进入 C 随堂编程 →</a></div><div class="training-route"><span>02 / C++</span><h2>对象、生命周期与所有权</h2><p>构造析构、深拷贝、移动与 RAII；练习成功和失败的每条路径。</p><a class="btn soft" href="#/lesson/cpp-copy/coding">进入 C++ 随堂编程 →</a></div><div class="training-route"><span>03 / EXAM PRACTICE</span><h2>从会读到会解</h2><p>按模块、难度和题型刷题，先独立作答，再展开详细解析。</p><a class="btn soft" href="#/practice">进入进阶题库 →</a></div></section>
+ <section class="training-routes" aria-label="开始练习"><div class="training-route"><span>01 / C LANGUAGE</span><h2>从指针到内存</h2><p>数组、字符串、结构体与回调；把指针推演写成真正的函数。</p><a class="btn soft" href="#/lesson/c-pointer">学习指针并练习 →</a></div><div class="training-route"><span>02 / C++</span><h2>对象、生命周期与所有权</h2><p>构造析构、深拷贝、移动与 RAII；练习成功和失败的每条路径。</p><a class="btn soft" href="#/lesson/cpp-copy">学习对象并练习 →</a></div><div class="training-route"><span>03 / EXAM PRACTICE</span><h2>从会读到会解</h2><p>按模块、难度和题型刷题，先独立作答，再展开详细解析。</p><a class="btn soft" href="#/practice">进入进阶题库 →</a></div></section>
  <section class="topic-entry panel" aria-label="Linux 与波谷专题"><div><span class="eyebrow">笔试专题 · 从基础推到解法</span><h2>Linux、RTOS 优先级与波谷算法</h2><p>先讲清每个名词，再看分步图解，最后写题。</p></div><div class="topic-entry-links"><a href="#/module/linux">Linux / fork / exec / 设备树</a><a href="#/lesson/r-priority-basics">RTOS 优先级与调度</a><a href="#/lesson/ds-valley">波谷定义与折线推演</a><a href="#/lesson/ds-valley-longest/coding">最长波谷编程练习</a></div></section>
  <details class="foundation-entry"><summary>还不熟悉 sizeof、& 与 *？展开从零开始的学习路线</summary>${beginnerGuide({compact:true})}</details>
  <div class="section-head"><div><h2>知识地图</h2><p>选择模块，按课程学习与练习</p></div><a class="btn link" href="#/review">复习错题 →</a></div><div class="module-grid">${modules.map(moduleCard).join('')}</div>`;
@@ -79,27 +82,24 @@ function lessonPage(id){
  const m=moduleById[l.module],i=lessons.indexOf(l),prev=lessons[i-1],next=lessons[i+1];
  const relevant=challenges.filter(c=>c.lesson===id||c.relatedLessons?.includes(id));
  const written=writtenQuestions.filter(q=>q.lesson===id),basic=l.quiz.filter(q=>!q.difficulty),advanced=l.quiz.filter(q=>q.difficulty);
- const diagram=hasWalkthrough(l)||l.visual,view=lessonView[id]||'reading';
- const group=lessonLevel[id]||(relevant.length?'coding':advanced.length+written.length?'advanced':'basic');
+ const diagram=hasWalkthrough(l)||l.visual;
  const selected=relevant.find(c=>c.id===lessonCodeChoice[id])||(l.beginner?relevant[0]:relevant.find(c=>c.level!=='入门')||relevant[0]);
  const refs=l.refs||sources.filter(s=>l.module==='c'?s.name.includes('N1570')||s.name.includes('AAPCS'):l.module==='cpp'?s.name.includes('C++'):['stm32','protocol','project'].includes(l.module)?s.name.includes(l.id==='p-spi'?'AN5543':'STM32'):l.module==='rtos'||l.module==='os'?s.name.includes('FreeRTOS'):l.module==='arm'?s.name.includes('AAPCS')||s.name.includes('Cortex'):l.module==='memory'?s.name.includes('AAPCS')||s.name.includes('STM32'):false);
  const total=l.quiz.length+written.length+relevant.length;
  return `<div class="crumb"><a href="#/home">学习工作台</a> / <a href="${moduleUrl(m.id)}">${E(m.name)}</a> / ${E(l.title)}</div>
- <header class="lesson-heading"><div><div class="eyebrow">${E(m.name)} · ${E(l.level)}</div><h1>${E(l.title)}</h1><p>${E(l.summary)}</p></div><a class="btn ghost" href="${moduleUrl(m.id)}">课程目录</a></header>
- <div class="lesson-modes" role="group" aria-label="课程视图"><button data-action="lesson-view" data-id="${id}" data-value="reading" aria-pressed="${view==='reading'}">知识讲解</button><button data-action="lesson-view" data-id="${id}" data-value="practice" aria-pressed="${view==='practice'}">随堂练习 <span>${total}</span></button><div class="lesson-breakdown">基础 ${basic.length} · 进阶 ${advanced.length+written.length} · 编程 ${relevant.length}</div></div>
- <div class="lesson-layout lesson-reading-view" ${view==='reading'?'':'hidden'}><article class="article panel">${beginnerSequence(l)}
- <div class="lesson-entry"><span>读懂原理后，用本课练习检验。</span><button class="btn soft" data-action="lesson-view" data-id="${id}" data-value="practice">开始随堂练习 →</button></div>
+ <header class="lesson-heading"><div><div class="eyebrow">${E(m.name)} · ${E(l.level)}</div><h1>${E(l.title)}</h1><p>${E(l.summary)}</p></div></header>
+ <div class="lesson-flow" aria-label="本课学习顺序"><span><b>1</b> 理解知识</span><span><b>2</b> 跟着例题推导</span><span><b>3</b> 完成随堂练习</span><small>本课 ${total} 道练习</small></div>
+ <div class="lesson-layout lesson-reading-view"><article class="article panel">${beginnerSequence(l)}
  ${explanation(l)}<h2 id="concept">关键结论与适用条件</h2>${hasBeginnerNotes(l)?'<details class="advanced-reasoning"><summary>展开笔试规则与平台条件</summary>':''}<ol>${l.points.map(p=>`<li>${E(p)}</li>`).join('')}</ol>${hasBeginnerNotes(l)?'</details>':''}
  ${diagram?`<h2 id="diagram">图解推演</h2>${hasWalkthrough(l)?renderWalkthrough(l,visualStep[id]||0,spiMode):visual(l)}`:''}
  ${l.code?`<h2 id="example">代码示例</h2><pre class="codeblock"><code>${E(l.code)}</code></pre>`:''}${workedExample(l)}
- ${refs.length?`<h2 id="references">核对原理</h2><div class="lesson-refs">${refs.map(x=>`<a href="${E(x.url)}" target="_blank" rel="noopener noreferrer">${E(x.name)}</a>`).join('')}</div>`:''}
- <button class="btn primary lesson-bottom-practice" data-action="lesson-view" data-id="${id}" data-value="practice">进入本课练习 · ${total} 题 →</button>
- </article><aside class="aside panel"><h3>本课目录</h3><nav class="toc">${l.foundation||l.beginner||hasBeginnerNotes(l)?'<a href="#basics" data-scroll="basics">基础讲解与符号</a>':''}<a href="#why" data-scroll="why">从问题推到结论</a><a href="#concept" data-scroll="concept">关键结论</a>${diagram?'<a href="#diagram" data-scroll="diagram">图解推演</a>':''}${l.code?'<a href="#example" data-scroll="example">代码示例</a>':''}<a href="#worked" data-scroll="worked">推导例题</a></nav><div class="aside-divider"></div><p class="source-note">本课已完成 ${l.quiz.filter(q=>state.answers[q.id]?.submitted).length} / ${l.quiz.length} 道选择题</p><button class="btn soft" data-action="lesson-view" data-id="${id}" data-value="practice">去做随堂练习</button></aside></div>
- <section class="lesson-practice-view" ${view==='practice'?'':'hidden'} aria-label="随堂练习">
- <div class="practice-groups" role="group" aria-label="练习分类">${[['basic','基础巩固',basic.length],['advanced','进阶笔试',advanced.length+written.length],['coding','编程练习',relevant.length]].map(([v,t,n])=>`<button data-action="lesson-group" data-id="${id}" data-value="${v}" aria-pressed="${group===v}">${t}<span>${n}</span></button>`).join('')}</div>
- <div id="quiz" class="exercise-group" ${group==='basic'?'':'hidden'}><div class="exercise-intro"><h2>基础巩固</h2><p>原有简单题全部保留，先检查概念是否理解。</p></div>${basic.map((q,j)=>quizCard(q,j)).join('')}</div>
- <div id="written" class="exercise-group" ${group==='advanced'?'':'hidden'}><div class="exercise-intro"><h2>进阶笔试</h2><p>先独立推导、阅读代码，再展开详细解析。</p></div>${advanced.map((q,j)=>quizCard(q,j)).join('')}${written.map((q,j)=>writtenCard(q,j+advanced.length,state.drafts[q.id])).join('')}${!advanced.length&&!written.length?`<div class="empty">本课暂无进阶笔试题。可先完成基础题，或到本模块练习继续训练。<a class="btn soft" href="#/practice/${l.module}">进入模块练习</a></div>`:''}</div>
- <div id="coding" ${group==='coding'?'':'hidden'}>${selected?`<div class="coding-picker"><label for="lesson-coding-select">本课编程题</label><select id="lesson-coding-select" data-lesson="${id}">${relevant.map((c,j)=>`<option value="${c.id}" ${c.id===selected.id?'selected':''}>${j+1}. ${E(c.title)} · ${E(c.level)}</option>`).join('')}</select><a href="#/challenge/${selected.id}">独立打开 ↗</a></div>${codingWorkbench(selected,state.drafts[selected.id])}`:`<div class="empty">本课暂无编程题。<a class="btn soft" href="#/challenges">浏览全部编程题</a></div>`}</div>
+ ${refs.length?`<details id="references" class="lesson-sources"><summary>参考资料 · 需要时核对原理</summary><div class="lesson-refs">${refs.map(x=>`<a href="${E(x.url)}" target="_blank" rel="noopener noreferrer">${E(x.name)}</a>`).join('')}</div></details>`:''}
+ </article><aside class="aside panel"><h3>本课目录</h3><nav class="toc">${l.foundation||l.beginner||hasBeginnerNotes(l)?'<a href="#basics" data-scroll="basics">基础讲解与符号</a>':''}<a href="#why" data-scroll="why">从问题推到结论</a><a href="#concept" data-scroll="concept">关键结论</a>${diagram?'<a href="#diagram" data-scroll="diagram">图解推演</a>':''}${l.code?'<a href="#example" data-scroll="example">代码示例</a>':''}<a href="#worked" data-scroll="worked">推导例题</a><a href="#exercises" data-scroll="exercises">随堂练习</a>${selected?'<a href="#coding" data-scroll="coding">编程练习</a>':''}</nav><div class="aside-divider"></div><p class="source-note">本课已完成 ${l.quiz.filter(q=>state.answers[q.id]?.submitted).length} / ${l.quiz.length} 道选择题</p></aside></div>
+ <section id="exercises" class="lesson-practice-view" aria-labelledby="exercises-title">
+ <header class="lesson-exercises-heading"><div class="eyebrow">学完就练</div><h2 id="exercises-title">随堂练习</h2><p>按基础 → 进阶 → 编程的顺序检验理解。先自己尝试，不会时再查看解析。</p></header>
+ ${basic.length?`<section id="quiz" class="exercise-group"><div class="exercise-intro"><h3>基础巩固 <span>${basic.length} 题</span></h3><p>检查概念与符号是否理解。</p></div>${basic.map((q,j)=>quizCard(q,j)).join('')}</section>`:''}
+ ${advanced.length+written.length?`<section id="written" class="exercise-group"><div class="exercise-intro"><h3>进阶笔试 <span>${advanced.length+written.length} 题</span></h3><p>练习代码阅读、推导和找错，解析包含判断步骤。</p></div>${advanced.map((q,j)=>quizCard(q,j+basic.length)).join('')}${written.map((q,j)=>writtenCard(q,j+basic.length+advanced.length,state.drafts[q.id])).join('')}</section>`:''}
+ ${selected?`<section id="coding"><div class="exercise-intro"><h3>编程练习 <span>${relevant.length} 题</span></h3><p>先看题目与样例，在右侧动手写代码。</p></div><div class="coding-picker"><label for="lesson-coding-select">选择本课题目</label><select id="lesson-coding-select" data-lesson="${id}">${relevant.map((c,j)=>`<option value="${c.id}" ${c.id===selected.id?'selected':''}>${j+1}. ${E(c.title)} · ${E(c.level)}</option>`).join('')}</select></div>${codingWorkbench(selected,state.drafts[selected.id])}</section>`:''}
  </section>
  <div class="lesson-nav"><a class="btn ghost" href="${prev?lessonUrl(prev.id):moduleUrl(l.module)}">← ${prev?E(prev.title):'返回目录'}</a><button class="btn ${state.completed[id]?'ghost':'primary'}" data-action="complete" data-id="${id}">${state.completed[id]?'已完成 · 取消标记':'标记学完'}</button><a class="btn ghost" href="${next?lessonUrl(next.id):moduleUrl(l.module)}">${next?E(next.title):'返回目录'} →</a></div>`;
 }
@@ -169,8 +169,6 @@ document.addEventListener('click',event=>{
   const target=event.target.closest('[data-action], [data-scroll]');if(!target)return;
   if(target.dataset.scroll){event.preventDefault();document.getElementById(target.dataset.scroll)?.scrollIntoView({behavior:'smooth',block:'start'});return;}
   const action=target.dataset.action,id=target.dataset.id;
-  if(action==='lesson-view'){lessonView[id]=target.dataset.value;renderMain();return;}
-  if(action==='lesson-group'){lessonLevel[id]=target.dataset.value;renderMain(true);return;}
   if(action==='copy-code'||action==='download-code'){const el=document.querySelector('[data-draft="'+id+'"]');if(!el)return;const code=el.value;if(action==='copy-code'){if(navigator.clipboard?.writeText)navigator.clipboard.writeText(code).then(()=>toast('代码已复制')).catch(()=>toast('复制失败，请在编辑区选择代码后复制。'));else toast('请在编辑区选择代码后复制。');}else{const c=challenges.find(x=>x.id===id),blob=new Blob([code],{type:'text/plain;charset=utf-8'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=id+(c?.language==='C11'?'.c':'.cpp');a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);}return;}
   if(action==='toggle-menu'){mobileOpen=!mobileOpen;shell();return;}
   if(action==='close-menu'){mobileOpen=false;shell();return;}
@@ -185,7 +183,7 @@ document.addEventListener('click',event=>{
   if(action==='complete'){state.completed[id]=!state.completed[id];saveState();renderMain(true);toast(state.completed[id]?'已标记完成':'已取消完成标记');return;}
   if(action==='load-more'){practiceLimit+=12;renderMain(true);return;}
   if(action==='review-filter'){showOnlyDue=target.dataset.value==='due';renderMain(true);return;}
-  if(action==='review-reset'){const l=questionById[id].lesson;lessonView[l.id]='practice';lessonLevel[l.id]=questionById[id].difficulty?'advanced':'basic';const old=state.answers[id]||{};state.answers[id]={...old,choice:undefined,revealed:false,submitted:false};saveState();location.hash=lessonUrl(questionById[id].lesson.id);return;}
+  if(action==='review-reset'){const old=state.answers[id]||{};state.answers[id]={...old,choice:undefined,revealed:false,submitted:false};saveState();location.hash=lessonUrl(questionById[id].lesson.id)+'/quiz-'+id;return;}
   if(action==='hint'||action==='solution'){const el=document.getElementById(action==='hint'?'challenge-hint':'challenge-solution');if(el){el.hidden=!el.hidden;target.setAttribute('aria-expanded',String(!el.hidden));}return;}
   if(action==='mock-start'){mock={started:Date.now(),finished:false,choices:{},questions:mockQuestions()};startMockTimer();renderMain();return;}
   if(action==='mock-choice'){if(mock&&!mock.finished){mock.choices[id]=Number(target.dataset.choice);renderMain(true);}return;}
