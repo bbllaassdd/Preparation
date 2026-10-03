@@ -153,6 +153,34 @@ try{
   await delay(300);
   await evaluate("location.hash='#/home'");await delay(100);
   await capture('workspace-home');
+  await open('linux-fork');
+  assert.ok(await evaluate("document.querySelector('.topic-foundation').textContent.includes('写时复制')"));
+  await evaluate("document.querySelector('[data-action=walk-next]').click();document.querySelector('#diagram').scrollIntoView()");
+  assert.equal(await evaluate("document.querySelectorAll('.topic-flow-card').length"),2);
+  assert.ok(await evaluate("document.querySelector('.walk-watch').textContent.includes('101')"));
+  await capture('linux-fork-desktop');
+  await open('linux-devicetree',390,844);await delay(300);
+  assert.ok(await evaluate("document.documentElement.scrollWidth<=innerWidth+1"),'device-tree tables contained on mobile');
+  assert.ok(await evaluate("document.querySelector('.lesson-refs').textContent.includes('Devicetree')"));
+  await evaluate("document.querySelector('.topic-table-scroll').scrollIntoView()");
+  await capture('devicetree-mobile');
+  await open('r-nvic-priority');
+  await evaluate("for(let i=0;i<3;i++)document.querySelector('[data-action=walk-next]').click()");
+  assert.ok(await evaluate("document.querySelector('.walk-watch').textContent.includes('0x50')"));
+  await open('ds-valley');
+  await evaluate("for(let i=0;i<4;i++)document.querySelector('[data-action=walk-next]').click();document.querySelector('#diagram').scrollIntoView()");
+  assert.ok(await evaluate("document.querySelector('.walk-watch').textContent.includes('平台版总数')"));
+  await capture('valley-desktop');
+  await open('ds-valley-longest');
+  await evaluate("for(let i=0;i<6;i++)document.querySelector('[data-action=walk-next]').click()");
+  assert.ok(await evaluate("document.querySelector('.walk-status').textContent.includes('3→5')"));
+  await evaluate("document.querySelector('[data-action=walk-reset]').click()");
+  assert.equal(await evaluate("document.querySelector('.walkthrough').dataset.step"),'0');
+  await evaluate("location.hash='#/lesson/ds-valley-longest/coding'");await delay(100);
+  assert.equal(await evaluate("document.querySelector('#challenge-solution').hidden"),true);
+  assert.ok(await evaluate("document.querySelector('.workbench-editor').value.includes('longest_valley')"));
+  await evaluate("document.querySelector('[data-action=solution]').click()");
+  assert.ok(await evaluate("document.querySelector('#challenge-solution').textContent.includes('down')"));
   // 所有图解帧都无浏览器执行异常，且按钮可用；下面遍历所有课程检查真实 DOM。
   const {lessons}=await import('../dist/content.js');
   for(const l of lessons){

@@ -7,7 +7,23 @@ import {beginnerPath} from '../dist/beginner-lessons.js';
 import {examChoices,writtenQuestions} from '../dist/exam-bank.js';
 import {createOptionLayouts,optionLetter} from '../dist/question-options.js';
 import {lessonCoding} from '../dist/lesson-coding.js';
+import {expansionLessons} from '../dist/linux-expansion.js';
+import {expansionCoding} from '../dist/expansion-coding.js';
+import {expansionWalkthroughs} from '../dist/expansion-walkthroughs.js';
 const allQuestions=lessons.flatMap(l=>l.quiz);
+assert.equal(expansionLessons.length,15);
+assert.equal(lessons.filter(l=>l.module==='linux').length,11);
+for(const l of expansionLessons){
+ assert.ok(l.foundation.length>=3,l.id);
+ assert.equal(l.quiz.filter(q=>!q.difficulty).length,3);
+ assert.equal(l.quiz.filter(q=>q.difficulty).length,1);
+}
+for(const c of expansionCoding){
+ assert.ok(lessons.some(l=>l.id===c.lesson));
+ assert.ok(c.starter&&c.solution&&c.steps.length===3&&c.cases.length>=3,c.id);
+}
+assert.equal(expansionWalkthroughs['ds-valley'].frames.at(-1).watch[1][1],'2');
+assert.equal(expansionWalkthroughs['ds-valley-longest'].frames.at(-1).watch[2][1],'5');
 
 assert.equal(new Set(lessons.map(l=>l.id)).size,lessons.length);
 assert.deepEqual(lessons.slice(0,beginnerPath.length).map(l=>l.id),beginnerPath);

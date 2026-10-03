@@ -2,6 +2,7 @@ import {additionalLessons} from './extra-lessons.js';
 import {detailedAnswers} from './detailed-answers.js';
 import {beginnerLessons,beginnerPath} from './beginner-lessons.js';
 import {examChoices} from './exam-bank.js';
+import {expansionLessons,expansionSources} from './linux-expansion.js';
 export const modules = [
   {id:'c', name:'C 语言', icon:'{ }', color:'#3775df', description:'类型、指针、数组与内存安全'},
   {id:'cpp', name:'C++', icon:'C+', color:'#8a63de', description:'对象生命周期与常用语法'},
@@ -13,7 +14,8 @@ export const modules = [
   {id:'protocol', name:'通信协议', icon:'⇄', color:'#d68765', description:'UART、SPI、I²C、CAN'},
   {id:'rtos', name:'FreeRTOS', icon:'◷', color:'#4b8c70', description:'任务、队列、中断与内存'},
   {id:'engineering', name:'调试与工程', icon:'⌁', color:'#797b9b', description:'定位故障与可靠性'},
-  {id:'network', name:'网络与 Linux', icon:'◎', color:'#7176ae', description:'简历相关的补充基础'},
+  {id:'linux', name:'Linux 与设备树', icon:'$_', color:'#336d99', description:'从进程、fork/exec 到设备树与驱动'},
+  {id:'network', name:'网络基础', icon:'◎', color:'#7176ae', description:'TCP/IP 与网络通信基础'},
   {id:'project', name:'项目专项', icon:'★', color:'#b56d8e', description:'把知识讲回你的项目'}
 ];
 
@@ -845,6 +847,10 @@ add('project','pr-robot','机器人实习：底盘通信与故障定位','P1','�
 ]);
 
 lessons.push(...additionalLessons);
+lessons.push(...expansionLessons);
+lessons.find(l=>l.id==='n-linux').module='linux';
+// Keep the numbered new Linux learning path before the original overview.
+lessons.push(lessons.splice(lessons.findIndex(l=>l.id==='n-linux'),1)[0]);
 const simpleSummaries={'c-types':'先学 sizeof 怎样求字节数，再比较不同平台的常见大小。','c-pointer':'指针保存地址；先读懂 &x、p、*p，再看怎样安全使用。','c-array':'数组存放多个同类型元素，先从下标与整个数组的大小学起。','c-struct':'结构体组合几个具名成员；先会访问成员，再计算存储大小。'};
 for(const l of lessons)if(simpleSummaries[l.id])l.summary=simpleSummaries[l.id];
 for(const l of lessons)for(const q of l.quiz)if(detailedAnswers[q.id])q.explain=detailedAnswers[q.id];
@@ -855,6 +861,7 @@ for(const q of examChoices){
 }
 export {lessons};
 export const sources = [
+  ...expansionSources,
   {name:'C++ 标准草案：虚函数',url:'https://eel.is/c++draft/class.virtual',note:'动态分派与覆盖规则；结合所用 C++ 标准版本学习'},
   {name:'C++ 标准草案：dynamic_cast',url:'https://eel.is/c++draft/expr.dynamic.cast',note:'运行时类型检查、失败与生命周期前提'},
   {name:'FreeRTOS Queue 文档',url:'https://www.freertos.org/Documentation/02-Kernel/02-Kernel-features/02-Queues-mutexes-and-semaphores/01-Queues',note:'队列值拷贝与指针消息'},

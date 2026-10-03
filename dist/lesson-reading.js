@@ -2,19 +2,27 @@ import {tutorials} from './tutorials.js';
 import {walkthroughs,spiWalkthrough} from './walkthroughs.js';
 import {beginnerWalkthroughs} from './beginner-walkthroughs.js';
 import {beginnerExplanation,hasBeginnerNotes} from './beginner-reading.js';
+import {expansionWalkthroughs} from './expansion-walkthroughs.js';
 const E=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 export const tutorialFor=l=>l.tutorial||tutorials[l.id];
-export const walkthroughFor=(l,mode=0)=>l.id==='p-spi'?spiWalkthrough(mode):beginnerWalkthroughs[l.id]||walkthroughs[l.id];
-export const hasWalkthrough=l=>l.id==='p-spi'||!!beginnerWalkthroughs[l.id]||!!walkthroughs[l.id];
+export const walkthroughFor=(l,mode=0)=>l.id==='p-spi'?spiWalkthrough(mode):expansionWalkthroughs[l.id]||beginnerWalkthroughs[l.id]||walkthroughs[l.id];
+export const hasWalkthrough=l=>!!walkthroughFor(l);
+function foundation(l){return l.foundation?`<section class="topic-foundation" id="basics"><h2>先把基础讲清楚</h2>${l.foundation.map(s=>`<section><h3>${E(s.title)}</h3>${s.paragraphs.map(p=>`<p>${E(p)}</p>`).join('')}${s.table?`<div class="topic-table-scroll" tabindex="0" role="region" aria-label="${E(s.title)}"><table><thead><tr>${s.table.heads.map(h=>`<th scope="col">${E(h)}</th>`).join('')}</tr></thead><tbody>${s.table.rows.map(r=>`<tr>${r.map(c=>`<td>${E(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`:''}</section>`).join('')}</section>`:'';}
 export function explanation(l){
   const t=tutorialFor(l);if(!t)return beginnerExplanation(l);
   const steps=`<ol class="reason-steps">${t.steps.map((s,i)=>`<li><span class="reason-index">${i+1}</span><p>${E(s)}</p></li>`).join('')}</ol><div class="pitfall"><strong>容易混淆的地方</strong><p>${E(t.trap)}</p></div>`;
   if(l.beginner||hasBeginnerNotes(l))return `${beginnerExplanation(l)}<details class="advanced-reasoning" id="why"><summary>从问题推到结论 · 学会例子后再看</summary><h3 class="reason-question">${E(t.question)}</h3>${steps}</details>`;
-  return `${beginnerExplanation(l)}<section class="reasoning" id="why"><h2>01 · 从问题推到结论</h2><h3 class="reason-question">${E(t.question)}</h3>${steps}</section>`;
+  return `${foundation(l)}${beginnerExplanation(l)}<section class="reasoning" id="why"><h2>01 · 从问题推到结论</h2><h3 class="reason-question">${E(t.question)}</h3>${steps}</section>`;
 }
 export function workedExample(l){const t=tutorialFor(l);if(!t)return '';return `<section id="worked"><h2>推导例题 · 先自己想一遍</h2><div class="worked-example"><p class="worked-prompt">${E(t.worked.prompt)}</p><details class="worked-answer"><summary>查看解析与答案</summary><div><h3>逐步解析</h3><p>${E(t.worked.answer)}</p></div></details></div></section>`;}
 export function relatedReasoning(l){const t=tutorialFor(l);return t?`<details class="quiz-reason"><summary>展开本课原理，重新推导</summary><ol>${t.steps.map(s=>`<li>${E(s)}</li>`).join('')}</ol><p><strong>注意：</strong>${E(t.trap)}</p></details>`:'';}
 function svg(w,f){
+  if(w.kind==='flow')return `<div class="topic-flow" role="group" aria-label="${E(f.title)}">${f.cells.map((c,i)=>`<div class="topic-flow-card ${f.focus.includes(i)?'active':''}"><span>${E(c.label)}</span><strong>${E(c.value)}</strong><p>${E(c.detail)}</p></div>`).join('')}</div>`;
+  if(w.kind==='valley'){
+    const values=w.values,min=Math.min(...values),max=Math.max(...values);
+    const x=i=>45+i*470/(values.length-1),y=v=>180-(v-min)*125/Math.max(1,max-min);
+    return `<svg viewBox="0 0 560 245" role="img" aria-label="${E(f.title)}；数组${values.join(',')}；高亮下标${f.highlight.join(',')}"><path d="M35 205 H535" stroke="#8a9ab1" fill="none"/><polyline points="${values.map((v,i)=>x(i)+','+y(v)).join(' ')}" stroke="#3275c8" fill="none" stroke-width="3"/>${values.map((v,i)=>`<g><circle cx="${x(i)}" cy="${y(v)}" r="${f.highlight.includes(i)?9:5}" fill="${f.highlight.includes(i)?'#b76612':'#3275c8'}"/><text x="${x(i)}" y="${y(v)-17}" text-anchor="middle" fill="#263f60" font-size="16">${v}</text><text x="${x(i)}" y="227" text-anchor="middle" fill="#52647d" font-size="13">i=${i}</text></g>`).join('')}</svg>`;
+  }
   const text=(x,y,s,size=15,fill='#314f76')=>`<text x="${x}" y="${y}" text-anchor="middle" font-size="${size}" fill="${fill}">${E(s)}</text>`;
   if(w.kind==='spi'){
     const pol=w.mode>>1,pha=w.mode&1,bits=[1,0,1,1],edge=f.edge??-1,high=67,low=102;

@@ -2,7 +2,9 @@
 import {additionalChallenges} from './extra-challenges.js';
 import {examChallenges} from './exam-challenges.js';
 import {lessonCoding} from './lesson-coding.js';
+import {expansionCoding} from './expansion-coding.js';
 export const challenges = [
+  ...expansionCoding,
   ...lessonCoding,
   ...examChallenges,
   ...additionalChallenges,

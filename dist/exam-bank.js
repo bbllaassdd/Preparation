@@ -1,6 +1,8 @@
 // Original written-exam problems. Platform problems live in exam-challenges.js.
+import {expansionChoices,expansionWritten} from './linux-expansion.js';
 export const examChoices=[];
 export const writtenQuestions=[];
+// Append the new topic bank after existing entries to keep existing order stable.
 function M(id,lesson,prompt,code,options,steps,level='进阶'){
   examChoices.push({id:'exam-'+id,lesson,prompt,code,options,answer:0,steps,explain:steps.join('\n'),difficulty:level,source:'原创笔试题'});
 }
@@ -82,3 +84,6 @@ W('hardfault','e-debug','简答设计','一次HardFault怎样收集可用现场'
 W('tcp-framing','n-tcpudp','简答设计','长度前缀协议怎样处理半包和连包','协议为2字节大端长度+载荷，长度最大1024。设计持续输入解析器，描述长度不足、载荷不足、多帧与非法长度。','','积累2字节头后解码长度并校验上限，等待完整载荷，交付后继续处理剩余字节；非法长度/超时按协议关闭或可靠重同步。',['每次recv长度不代表报文边界，保存当前头与载荷进度。','先验长度，再申请/索引；还要覆盖0长度约定和不可信输入。','一个输入批次可能包含多帧，交付一帧后不能直接丢掉剩余字节。'],['半包与连包3分','长度校验2分','超时/重同步/零长度2分']);
 W('return-register','arm-register','代码阅读','AAPCS32的参数与返回值','按AAPCS32，函数f(int a,int b,int c,int d,int e)五个整数参数一般怎样传递？普通32位整数返回值在哪里？不要把该规则套到任意ABI。','','前四个参数通常在R0-R3，第五个通过栈传入；32位整数返回值通常在R0。',['调用者根据ABI准备寄存器和栈；被调用者按同一约定解释。','实际栈偏移取决于函数序言和保存寄存器，不能只看一张寄存器表猜偏移。','浮点、64位值、结构体返回等有额外规则；本题限定五个普通32位整数。'],['五参数位置3分','返回值1分','栈偏移和适用范围2分']);
 W('project-budget','pr-robot','简答设计','周期控制任务的最坏时间预算','控制周期5ms；采样1ms、控制计算1.5ms、输出0.5ms；可能被ISR累计占用1.2ms，还可能等待锁1ms。是否满足单周期预算？','','合计5.2ms，已超过5ms，不能由平均3ms处理时间宣称满足；需降低阻塞/干扰、调整周期或拆分，并测量最坏路径。',['任务自身工作共3ms，不包含被抢占和锁阻塞。','加入干扰1.2ms与阻塞1ms，总响应时间至少预算5.2ms。','实际调度分析还要考虑释放抖动、任务相互干扰和中断到达模型；题设的简单加法已足以发现预算不满足。'],['总和与判断3分','工作时间/响应时间区分2分','改进与验证2分'],'挑战');
+
+examChoices.push(...expansionChoices);
+writtenQuestions.push(...expansionWritten);
