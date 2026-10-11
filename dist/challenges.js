@@ -3,7 +3,9 @@ import {additionalChallenges} from './extra-challenges.js';
 import {examChallenges} from './exam-challenges.js';
 import {lessonCoding} from './lesson-coding.js';
 import {expansionCoding} from './expansion-coding.js';
+import {acmBasics} from './acm-basics.js';
 export const challenges = [
+  ...acmBasics,
   ...expansionCoding,
   ...lessonCoding,
   ...examChallenges,

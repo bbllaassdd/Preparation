@@ -1,4 +1,5 @@
 // Original C11/C++17 lesson exercises. Reference solutions are compiled by check-lesson-code.mjs.
+import {attachLessonAcm} from './lesson-acm.js';
 export const lessonCoding=[];
 function add(id,lesson,relatedLessons,language,level,title,prompt,starter,cases,hint,solution,steps,checks){
  lessonCoding.push({id:'lab-'+id,lesson,relatedLessons,language,level,title,prompt,starter,cases,hint,solution,steps,checks,kind:language+' 编程',source:'原创随堂编程',analysis:steps.join('\n'),links:[]});
@@ -210,3 +211,4 @@ for(const c of lessonCoding){
  const missing=headers.filter(h=>!c.starter.includes(h));
  if(missing.length)c.starter=missing.join('\n')+'\n'+c.starter;
 }
+attachLessonAcm(lessonCoding);

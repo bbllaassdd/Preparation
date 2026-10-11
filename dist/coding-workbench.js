@@ -1,15 +1,18 @@
 const E=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 export function codingWorkbench(c,draft){
  const code=draft??c.starter??'';
+ const program=c.acm||c;
+ const complete=c.format==='acm'||!!c.acm;
+ const sample=(x,i)=>`<div class="sample-case"><span>样例 ${i+1}</span><h4>输入</h4><pre>${E(x.input||'(空输入)')}</pre><h4>输出</h4><pre>${E(x.output||'(无输出)')}</pre></div>`;
  return `<div class="coding-workbench" data-problem="${c.id}">
  <section class="problem-pane panel" aria-label="编程题目">
    <div class="pane-heading"><span>题目说明</span><span class="problem-level">${E(c.level)} · ${E(c.language||c.kind)}</span></div>
    <div class="problem-body"><p class="problem-origin">${E(c.source||'手写与场景练习')}</p><h2>${E(c.title)}</h2><p class="problem-prompt">${E(c.prompt)}</p>
-   <h3>样例与边界</h3>${c.cases.map((x,i)=>`<div class="sample-case"><span>样例 ${i+1}</span><p>${E(x)}</p></div>`).join('')}
-   ${c.starter?`<details class="starter-detail"><summary>查看函数接口与代码框架</summary><pre class="codeblock"><code>${E(c.starter)}</code></pre></details>`:''}
-   <div class="problem-actions"><button class="btn ghost" data-action="hint" data-id="${c.id}" aria-controls="challenge-hint" aria-expanded="false">看提示</button><button class="btn soft" data-action="solution" data-id="${c.id}" aria-controls="challenge-solution" aria-expanded="false">查看参考解与分析</button></div>
+   ${complete?`<div class="acm-format"><h3>${c.acm?'完整程序的输入输出格式':'输入输出格式'}</h3><h4>输入</h4><p>${E(program.input)}</p><h4>输出</h4><p>${E(program.output)}</p></div><h3>完整程序样例</h3>${program.tests.map(sample).join('')}${c.acm?`<details class="starter-detail"><summary>原函数题的接口边界样例</summary>${c.cases.map(x=>`<p>${E(x)}</p>`).join('')}</details>`:''}`:`<h3>样例与边界</h3>${c.cases.map((x,i)=>`<div class="sample-case"><span>样例 ${i+1}</span><p>${E(x)}</p></div>`).join('')}`}
+   ${c.starter?`<details class="starter-detail"><summary>查看代码框架（不含答案）</summary><pre class="codeblock"><code>${E(c.starter)}</code></pre></details>`:''}
+   <div class="problem-actions"><button class="btn ghost" data-action="hint" data-id="${c.id}" aria-controls="challenge-hint" aria-expanded="false">看提示</button><button class="btn soft" data-action="solution" data-id="${c.id}" aria-controls="challenge-solution" aria-expanded="false">查看答案与详细解析</button></div>
    <div id="challenge-hint" hidden class="quiz-answer">${E(c.hint)}</div>
-   <section id="challenge-solution" hidden class="challenge-solution"><h3>参考实现</h3><pre class="codeblock"><code>${E(c.solution)}</code></pre><div class="quiz-answer"><h3>逐步分析与复杂度</h3>${c.steps?`<ol>${c.steps.map(x=>`<li>${E(x)}</li>`).join('')}</ol>`:`<p>${E(c.analysis)}</p>`}${c.checks?`<h3>提交前检查</h3><ul>${c.checks.map(x=>`<li>${E(x)}</li>`).join('')}</ul>`:''}</div></section>
+   <section id="challenge-solution" hidden class="challenge-solution"><h3>${complete?'完整程序答案 · '+(c.language==='C11'?'stdio.h':'iostream'):'参考答案'}</h3><pre class="codeblock"><code>${E(program.solution)}</code></pre><div class="answer-actions"><button class="btn ghost small" data-action="copy-answer" data-id="${c.id}">复制答案</button><button class="btn ghost small" data-action="download-answer" data-id="${c.id}">下载答案</button></div>${c.acm?`<details class="starter-detail"><summary>单独查看原函数／类的答案</summary><pre class="codeblock"><code>${E(c.solution)}</code></pre></details>`:''}<div class="quiz-answer">${complete?`<h3>头文件与输入输出怎么读</h3><p>${E(program.headerNotes)}</p>${c.acm?`<ol>${c.acm.steps.map(x=>`<li>${E(x)}</li>`).join('')}</ol>`:''}`:''}<h3>逐步分析与复杂度</h3>${c.steps?`<ol>${c.steps.map(x=>`<li>${E(x)}</li>`).join('')}</ol>`:`<p>${E(c.analysis)}</p>`}${c.track==='basics'?`<p><b>复杂度：</b>${E(c.analysis)}</p>`:''}${c.checks?`<h3>提交前检查</h3><ul>${c.checks.map(x=>`<li>${E(x)}</li>`).join('')}</ul>`:''}</div></section>
    ${c.links.length?`<h3>原题平台</h3><div class="external-links">${c.links.map(([name,url])=>`<a href="${E(url)}" target="_blank" rel="noopener noreferrer">${E(name)} ↗</a>`).join('')}</div>`:''}
    </div>
  </section>

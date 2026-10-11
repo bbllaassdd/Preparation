@@ -1,6 +1,7 @@
 import {recruitmentPage,mountRecruitment} from './recruitment.js';
 import {modules,lessons,sources} from './content.js';
 import {challenges} from './challenges.js';
+import {acmGuide} from './acm-basics.js';
 import {codingWorkbench} from './coding-workbench.js';
 import {writtenQuestions} from './exam-bank.js';
 import {writtenCard,difficulty} from './exam-ui.js';
@@ -18,7 +19,7 @@ const optionLayouts=createOptionLayouts(allQuestions);
 const letter=(q,index)=>optionLetter(optionLayouts.get(q.id),index);
 const app=document.querySelector('#app');
 let state=loadState();
-let route='home',routeArg='',searchTerm='',practiceModule='all',practiceLimit=12,showOnlyDue=false,practiceDifficulty='进阶',practiceType='all',codingModule='all',codingDifficulty='all';
+let route='home',routeArg='',searchTerm='',practiceModule='all',practiceLimit=12,showOnlyDue=false,practiceDifficulty='进阶',practiceType='all',codingModule='all',codingDifficulty='all',codingTrack='all',codingLanguage='all';
 let lessonCodeChoice={};
 let visualStep={},spiMode=0,mobileOpen=false,mock=null,mockTimer=null;
 
@@ -41,6 +42,7 @@ function setRoute(){
   if(!['home','module','lesson','practice','review','mock','challenges','challenge','sources','search','companies'].includes(route)) route='home';
   if(route==='lesson'&&lessonById[routeArg]){state.lastLesson=routeArg;saveState();}
   if(route==='practice'&&moduleById[routeArg]){practiceModule=routeArg;practiceLimit=12;}
+  if(route==='challenges'&&routeArg==='acm'){codingTrack='acm';codingModule='all';codingDifficulty='all';}
   mobileOpen=false;render();window.scrollTo(0,0);
   if(route==='lesson'){
     const section=parts[2]==='practice'?'exercises':parts[2]==='coding'?'coding':parts[2]?.startsWith('quiz-')?parts[2]:null;
@@ -70,7 +72,7 @@ function homePage(){
  const next=lessons.find(l=>!state.completed[l.id])||lessons[0],resume=lessonById[state.lastLesson]||next;
  return `<header class="work-home"><div><div class="eyebrow">MCU · C / C++ · FREERTOS</div><h1>嵌入式学习工作台</h1><p>看懂一个知识点，再亲手写出它。基础题、笔试题与编程题按课程整理。</p></div><div class="home-actions"><a class="btn primary" href="${lessonUrl(resume.id)}">继续学习 →</a><a class="btn ghost" href="#/practice">打开题库</a><a class="btn ghost" href="#/companies">今日投递 →</a></div></header>
  <div class="home-statline"><span><b>${lessons.length}</b> 节课程</span><span><b>${challenges.length}</b> 道编程与场景题</span><span><b>${completedCount()}</b> 课已完成</span><span><b>${dueCount()}</b> 道错题待复习</span></div>
- <section class="training-routes" aria-label="开始练习"><div class="training-route"><span>01 / C LANGUAGE</span><h2>从指针到内存</h2><p>数组、字符串、结构体与回调；把指针推演写成真正的函数。</p><a class="btn soft" href="#/lesson/c-pointer">学习指针并练习 →</a></div><div class="training-route"><span>02 / C++</span><h2>对象、生命周期与所有权</h2><p>构造析构、深拷贝、移动与 RAII；练习成功和失败的每条路径。</p><a class="btn soft" href="#/lesson/cpp-copy">学习对象并练习 →</a></div><div class="training-route"><span>03 / EXAM PRACTICE</span><h2>从会读到会解</h2><p>按模块、难度和题型刷题，先独立作答，再展开详细解析。</p><a class="btn soft" href="#/practice">进入进阶题库 →</a></div></section>
+ <section class="training-routes" aria-label="开始练习"><div class="training-route"><span>01 / C LANGUAGE</span><h2>从输入输出开始写程序</h2><p>C 用 stdio.h，C++ 用 iostream；从循环、数组到排序、二分，按序练习基础 ACM 题。</p><a class="btn soft" href="#/challenges/acm">基础 ACM 编程 →</a></div><div class="training-route"><span>02 / C++</span><h2>对象、生命周期与所有权</h2><p>构造析构、深拷贝、移动与 RAII；练习成功和失败的每条路径。</p><a class="btn soft" href="#/lesson/cpp-copy">学习对象并练习 →</a></div><div class="training-route"><span>03 / EXAM PRACTICE</span><h2>从会读到会解</h2><p>按模块、难度和题型刷题，先独立作答，再展开详细解析。</p><a class="btn soft" href="#/practice">进入进阶题库 →</a></div></section>
  <section class="topic-entry panel" aria-label="Linux 与波谷专题"><div><span class="eyebrow">笔试专题 · 从基础推到解法</span><h2>Linux、RTOS 优先级与波谷算法</h2><p>先讲清每个名词，再看分步图解，最后写题。</p></div><div class="topic-entry-links"><a href="#/module/linux">Linux / fork / exec / 设备树</a><a href="#/lesson/r-priority-basics">RTOS 优先级与调度</a><a href="#/lesson/ds-valley">波谷定义与折线推演</a><a href="#/lesson/ds-valley-longest/coding">最长波谷编程练习</a></div></section>
  <details class="foundation-entry"><summary>还不熟悉 sizeof、& 与 *？展开从零开始的学习路线</summary>${beginnerGuide({compact:true})}</details>
  <div class="section-head"><div><h2>知识地图</h2><p>选择模块，按课程学习与练习</p></div><a class="btn link" href="#/review">复习错题 →</a></div><div class="module-grid">${modules.map(moduleCard).join('')}</div>`;
@@ -83,7 +85,7 @@ function lessonPage(id){
  const relevant=challenges.filter(c=>c.lesson===id||c.relatedLessons?.includes(id));
  const written=writtenQuestions.filter(q=>q.lesson===id),basic=l.quiz.filter(q=>!q.difficulty),advanced=l.quiz.filter(q=>q.difficulty);
  const diagram=hasWalkthrough(l)||l.visual;
- const selected=relevant.find(c=>c.id===lessonCodeChoice[id])||(l.beginner?relevant[0]:relevant.find(c=>c.level!=='入门')||relevant[0]);
+ const selected=relevant.find(c=>c.id===lessonCodeChoice[id])||relevant.find(c=>c.track==='basics')||(l.beginner?relevant[0]:relevant.find(c=>c.level!=='入门')||relevant[0]);
  const refs=l.refs||sources.filter(s=>l.module==='c'?s.name.includes('N1570')||s.name.includes('AAPCS'):l.module==='cpp'?s.name.includes('C++'):['stm32','protocol','project'].includes(l.module)?s.name.includes(l.id==='p-spi'?'AN5543':'STM32'):l.module==='rtos'||l.module==='os'?s.name.includes('FreeRTOS'):l.module==='arm'?s.name.includes('AAPCS')||s.name.includes('Cortex'):l.module==='memory'?s.name.includes('AAPCS')||s.name.includes('STM32'):false);
  const total=l.quiz.length+written.length+relevant.length;
  return `<div class="crumb"><a href="#/home">学习工作台</a> / <a href="${moduleUrl(m.id)}">${E(m.name)}</a> / ${E(l.title)}</div>
@@ -121,7 +123,10 @@ function practicePage(){
 function reviewPage(){const entries=Object.entries(state.answers).filter(([_,a])=>a.needsReview).map(([id,a])=>({q:questionById[id],a})).filter(x=>x.q);const filtered=showOnlyDue?entries.filter(x=>!x.a.due||x.a.due<=Date.now()):entries;return `${pageHead('REVIEW','错题复习','做错或主动查看解析的题会出现在这里。重做正确后安排下一轮复习。')}<div class="filters"><button class="pill ${!showOnlyDue?'active':''}" data-action="review-filter" data-value="all">全部错题 ${entries.length}</button><button class="pill ${showOnlyDue?'active':''}" data-action="review-filter" data-value="due">现在待复习 ${dueCount()}</button></div>${filtered.length?filtered.map(({q,a})=>`<div class="review-card panel"><div class="status-dot" style="background:${a.due&&a.due>Date.now()?'#65b69c':'#e7a25e'}"></div><div class="body"><strong>${E(q.prompt)}</strong><p>${E(q.lesson.title)} · ${a.due&&a.due>Date.now()?'下次复习 '+new Date(a.due).toLocaleDateString('zh-CN'):'现在可复习'}</p></div><a class="btn soft small" href="${lessonUrl(q.lesson.id)}">回到课程</a><button class="btn ghost small" data-action="review-reset" data-id="${q.id}">重做</button></div>`).join(''):`<div class="empty"><div class="big">✓</div>${showOnlyDue?'现在没有待复习的题。':'还没有错题，先去做几道练习。'}<p><a class="btn soft" href="#/practice">进入专题练习</a></p></div>`}`;}
 function mockQuestions(){return modules.map(m=>{const pool=allQuestions.filter(q=>questionById[q.id].lesson.module===m.id&&q.difficulty);const fallback=allQuestions.filter(q=>questionById[q.id].lesson.module===m.id);const pick=pool.length?pool:fallback;return pick[Math.floor(Math.random()*pick.length)];}).filter(Boolean);}
 function mockPage(){if(!mock)return `${pageHead('TIMED PRACTICE','模拟笔试','优先抽取进阶题，12 道跨模块选择题，限时 20 分钟；提交后显示分数与逐题解析。')}<div class="mock-intro"><div class="mock-stat"><div><strong>12</strong><br>道题</div><div><strong>20</strong><br>分钟</div><div><strong>12</strong><br>覆盖模块</div></div><p>模拟过程中隐藏答案。你可以跳过不会的题，提交后统一查看解析。</p><button class="btn primary" data-action="mock-start">开始模拟 →</button></div>`;const elapsed=Math.floor((Date.now()-mock.started)/1000),left=Math.max(0,1200-elapsed),min=String(Math.floor(left/60)).padStart(2,'0'),sec=String(left%60).padStart(2,'0');const score=mock.questions.filter(q=>mock.choices[q.id]===q.answer).length;return `${pageHead('TIMED PRACTICE','模拟笔试',mock.finished?'已提交，可以查看逐题解析。':'作答时答案隐藏，结束后统一批改。',`<span class="mock-timer">${mock.finished?'已结束':min+':'+sec}</span>`)}${mock.finished?`<div class="result"><strong>${score} / ${mock.questions.length} 题正确</strong><p>错题可回到对应课程继续练习。本次模拟不覆盖课程中的历史答案。</p></div>`:`<div class="mock-banner"><span>已作答 ${Object.keys(mock.choices).length} / ${mock.questions.length}</span><button class="btn primary small" data-action="mock-finish">交卷并查看解析</button></div>`}${mock.questions.map((q,j)=>quizCard(q,j,{mockMode:true})).join('')}${!mock.finished?`<button class="btn primary" data-action="mock-finish">交卷并查看解析</button>`:'<button class="btn ghost" data-action="mock-reset">再做一次</button>'}`;}
-function challengesPage(){const items=challenges.filter(c=>(codingModule==='all'||lessonById[c.lesson].module===codingModule)&&(codingDifficulty==='all'||difficulty(c)===codingDifficulty));return `${pageHead('CODING LAB','手写与场景题','新增算法与嵌入式手写题，练习边界、复杂度和错误路径。参考解默认隐藏；可去原题平台提交。')}<div class="practice-toolbar exam-filters"><label>模块<select id="coding-module"><option value="all">全部模块</option>${modules.map(m=>`<option value="${m.id}" ${codingModule===m.id?'selected':''}>${E(m.name)}</option>`).join('')}</select></label><label>难度<select id="coding-difficulty">${['all','基础','进阶','挑战'].map(x=>`<option value="${x}" ${codingDifficulty===x?'selected':''}>${x==='all'?'全部难度':x}</option>`).join('')}</select></label><span>共 ${items.length} 题</span></div><div class="course-list">${items.map((c,j)=>`<a href="#/challenge/${c.id}" class="course-card"><span class="course-num">${String(j+1).padStart(2,'0')}</span><div class="course-body"><strong>${E(c.title)}</strong><p>${E(moduleById[lessonById[c.lesson].module].name)} · ${E(c.kind)} · ${E(c.prompt)}</p></div><div class="course-side"><span class="badge p1">${E(difficulty(c))}</span><span class="arrow">›</span></div></a>`).join('')}</div>${!items.length?'<div class="empty">此筛选暂无题目，请切换模块或难度。</div>':''}<p class="source-note">站内题干、样例与参考解独立编写，链接用于同类原题练习；原平台题意与约束以原页面为准。站内保存草稿，代码运行与判题在原平台或本地进行。</p>`;}
+function challengesPage(){
+ const items=challenges.filter(c=>(codingModule==='all'||lessonById[c.lesson].module===codingModule)&&(codingDifficulty==='all'||difficulty(c)===codingDifficulty)&&(codingTrack==='all'||c.track==='basics')&&(codingLanguage==='all'||c.language===codingLanguage));
+ return `${pageHead('CODING LAB','手写与场景题','基础 ACM 题提供 C（stdio.h）和 C++（iostream）完整程序。先独立作答，只有点击查看答案才展开实现。')}${acmGuide()}<div class="practice-toolbar exam-filters"><label>路线<select id="coding-track"><option value="all" ${codingTrack==='all'?'selected':''}>全部编程题</option><option value="acm" ${codingTrack==='acm'?'selected':''}>基础 ACM · 按序学习</option></select></label><label>语言<select id="coding-language">${[['all','全部语言'],['C11','C · stdio.h'],['C++17','C++ · iostream']].map(([v,t])=>`<option value="${v}" ${codingLanguage===v?'selected':''}>${t}</option>`).join('')}</select></label><label>模块<select id="coding-module"><option value="all">全部模块</option>${modules.map(m=>`<option value="${m.id}" ${codingModule===m.id?'selected':''}>${E(m.name)}</option>`).join('')}</select></label><label>难度<select id="coding-difficulty">${['all','基础','进阶','挑战'].map(x=>`<option value="${x}" ${codingDifficulty===x?'selected':''}>${x==='all'?'全部难度':x}</option>`).join('')}</select></label><span>共 ${items.length} 题</span></div><div class="course-list">${items.map((c,j)=>`<a href="#/challenge/${c.id}" class="course-card"><span class="course-num">${String(j+1).padStart(2,'0')}</span><div class="course-body"><strong>${E(c.title)}</strong><p>${E(moduleById[lessonById[c.lesson].module].name)} · ${E(c.kind)} · ${E(c.prompt)}</p></div><div class="course-side"><span class="badge p1">${E(difficulty(c))}</span><span class="arrow">›</span></div></a>`).join('')}</div>${!items.length?'<div class="empty">此筛选暂无题目，请切换模块、语言或难度。</div>':''}<p class="source-note">站内题干、样例与参考解独立编写，链接用于同类原题练习；原平台题意与约束以原页面为准。站内保存草稿，代码运行与判题在原平台或本地进行。</p>`;
+}
 function challengePage(id){
  const c=challenges.find(x=>x.id===id);if(!c)return notFound();const l=lessonById[c.lesson];
  return `<div class="crumb"><a href="#/challenges">编程题库</a> / <a href="${lessonUrl(l.id)}/coding">${E(l.title)}</a></div><header class="challenge-heading"><div><div class="eyebrow">${E(c.language||c.kind)} · ${E(c.level)}</div><h1>${E(c.title)}</h1></div><a class="btn ghost" href="${lessonUrl(l.id)}/coding">返回随堂练习</a></header>${codingWorkbench(c,state.drafts[c.id])}`;
@@ -172,6 +177,12 @@ document.addEventListener('click',event=>{
   const target=event.target.closest('[data-action], [data-scroll]');if(!target)return;
   if(target.dataset.scroll){event.preventDefault();document.getElementById(target.dataset.scroll)?.scrollIntoView({behavior:'smooth',block:'start'});return;}
   const action=target.dataset.action,id=target.dataset.id;
+  if(action==='copy-answer'||action==='download-answer'){
+    if(document.getElementById('challenge-solution')?.hidden!==false)return;
+    const c=challenges.find(x=>x.id===id);if(!c)return;const code=c.acm?.solution||c.solution;
+    if(action==='copy-answer'){if(navigator.clipboard?.writeText)navigator.clipboard.writeText(code).then(()=>toast('答案已复制')).catch(()=>toast('复制失败，请在答案中选择代码复制。'));else toast('请在答案中选择代码复制。');}
+    else{const blob=new Blob([code],{type:'text/plain;charset=utf-8'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=id+'-answer'+(c.language==='C11'?'.c':'.cpp');a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);}return;
+  }
   if(action==='copy-code'||action==='download-code'){const el=document.querySelector('[data-draft="'+id+'"]');if(!el)return;const code=el.value;if(action==='copy-code'){if(navigator.clipboard?.writeText)navigator.clipboard.writeText(code).then(()=>toast('代码已复制')).catch(()=>toast('复制失败，请在编辑区选择代码后复制。'));else toast('请在编辑区选择代码后复制。');}else{const c=challenges.find(x=>x.id===id),blob=new Blob([code],{type:'text/plain;charset=utf-8'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=id+(c?.language==='C11'?'.c':'.cpp');a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);}return;}
   if(action==='toggle-menu'){mobileOpen=!mobileOpen;shell();return;}
   if(action==='close-menu'){mobileOpen=false;shell();return;}
@@ -201,6 +212,8 @@ document.addEventListener('change',async event=>{
   if(event.target.id==='practice-module'){practiceModule=event.target.value;practiceLimit=12;renderMain();}
   if(event.target.id==='practice-difficulty'){practiceDifficulty=event.target.value;practiceLimit=12;renderMain();}
   if(event.target.id==='practice-type'){practiceType=event.target.value;practiceLimit=12;renderMain();}
+  if(event.target.id==='coding-track'){codingTrack=event.target.value;renderMain();}
+  if(event.target.id==='coding-language'){codingLanguage=event.target.value;renderMain();}
   if(event.target.id==='coding-module'){codingModule=event.target.value;renderMain();}
   if(event.target.id==='coding-difficulty'){codingDifficulty=event.target.value;renderMain();}
   if(event.target.id==='spi-mode'){spiMode=Number(event.target.value);visualStep['p-spi']=0;renderMain(true);}

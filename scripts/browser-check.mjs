@@ -234,6 +234,41 @@ try{
   assert.ok(await evaluate("document.documentElement.scrollWidth<=innerWidth+1"),'application mobile fits');
   await capture('applications-mobile');
 
+  // Beginner ACM: no solution in the editor; reveal only on explicit request.
+  await send('Emulation.setDeviceMetricsOverride',{width:1440,height:1000,deviceScaleFactor:1,mobile:false});
+  await evaluate("location.hash='#/challenges/acm'");await delay(100);
+  assert.equal(await evaluate("document.querySelector('.acm-guide').open"),false);
+  assert.equal(await evaluate("document.querySelectorAll('.course-card').length"),48);
+  await evaluate("{const s=document.querySelector('#coding-language');s.value='C11';s.dispatchEvent(new Event('change',{bubbles:true}));}");
+  assert.equal(await evaluate("document.querySelectorAll('.course-card').length"),24);
+  await evaluate("location.hash='#/challenge/acm-c-sum'");await delay(100);
+  assert.equal(await evaluate("document.querySelector('#challenge-solution').checkVisibility()"),false);
+  assert.equal(await evaluate("document.querySelector('[data-action=solution]').getAttribute('aria-expanded')"),'false');
+  assert.equal(await evaluate("document.querySelector('.workbench-editor').value.includes('a + b')"),false);
+  await evaluate("{const e=document.querySelector('.workbench-editor');e.value='#include <stdio.h>\\n// my own attempt';e.dispatchEvent(new Event('input',{bubbles:true}));}");
+  await capture('acm-before-answer-desktop');
+  await evaluate("document.querySelector('[data-action=solution]').click()");
+  assert.equal(await evaluate("document.querySelector('#challenge-solution').checkVisibility()"),true);
+  assert.ok(await evaluate("document.querySelector('#challenge-solution').textContent.includes('int main(void)')"));
+  assert.equal(await evaluate("document.querySelector('.workbench-editor').value"),'#include <stdio.h>\n// my own attempt');
+  await evaluate("document.querySelector('[data-action=download-answer]').click()");await delay(300);
+  assert.ok(fs.readFileSync(path.join(downloadDir,'acm-c-sum-answer.c'),'utf8').includes('printf("%d\\n", a + b)'));
+  await send('Page.reload');await delay(300);
+  assert.equal(await evaluate("document.querySelector('#challenge-solution').checkVisibility()"),false);
+  assert.equal(await evaluate("document.querySelector('.workbench-editor').value"),'#include <stdio.h>\n// my own attempt');
+  await evaluate("location.hash='#/challenge/acm-cpp-line-stats'");await delay(100);
+  assert.equal(await evaluate("document.querySelector('#challenge-solution').hidden"),true);
+  await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});await delay(100);
+  assert.ok(await evaluate("document.documentElement.scrollWidth<=innerWidth+1"),'ACM mobile fits');
+  await evaluate("document.querySelector('[data-action=solution]').click();document.querySelector('#challenge-solution').scrollIntoView()");
+  assert.ok(await evaluate("document.querySelector('#challenge-solution').textContent.includes('getline(cin, text)')"));
+  await delay(700);await capture('acm-answer-mobile');
+  await evaluate("location.hash='#/challenge/lab-swap'");await delay(100);
+  assert.equal(await evaluate("document.querySelector('#challenge-solution').hidden"),true);
+  await evaluate("document.querySelector('[data-action=solution]').click()");
+  assert.ok(await evaluate("document.querySelector('#challenge-solution').textContent.includes('int main(void)')"));
+  assert.ok(await evaluate("document.querySelector('#challenge-solution').textContent.includes('stdio.h')"));
+
   // 所有图解帧都无浏览器执行异常，且按钮可用；下面遍历所有课程检查真实 DOM。
   const {lessons}=await import('../dist/content.js');
   for(const l of lessons){
