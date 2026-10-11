@@ -10,6 +10,7 @@ import {lessonCoding} from '../dist/lesson-coding.js';
 import {expansionLessons} from '../dist/linux-expansion.js';
 import {expansionCoding} from '../dist/expansion-coding.js';
 import {expansionWalkthroughs} from '../dist/expansion-walkthroughs.js';
+import {phoneChoices,phoneWritten} from '../dist/phone-exam.js';
 const allQuestions=lessons.flatMap(l=>l.quiz);
 assert.equal(expansionLessons.length,15);
 assert.equal(lessons.filter(l=>l.module==='linux').length,11);
@@ -175,4 +176,29 @@ navigate('#/review','错题复习');
 click('review-reset',{id:advanced.id});
 winHandlers.hashchange();
 assert.equal(sectionVisits.at(-1),'quiz-'+advanced.id);
-console.log('PASS:',modules.length,'modules,',lessons.length,'lessons,',allQuestions.length,'choices',distribution,'displayed A/B/C/D,',writtenQuestions.length,'written,',challenges.length,'challenges; filters and canonical saved-answer grading.');
+// Imported questions must be discoverable, have distinct stable IDs, and keep answers closed.
+assert.equal(phoneChoices.length,24);assert.equal(phoneWritten.length,9);
+assert.deepEqual([...phoneChoices,...phoneWritten].map(q=>q.shareOrder).sort((a,b)=>a-b),Array.from({length:33},(_,i)=>i+1));
+for(const q of [...phoneChoices,...phoneWritten]){
+ assert.ok(lessons.some(l=>l.id===q.lesson));
+ assert.ok(q.steps.length>=3,q.id);
+ assert.ok(!JSON.stringify(q).includes('\\u0000'),q.id+' no invisible zero character');
+}
+navigate('#/practice/phone','手机笔试复述');
+assert.match(page.innerHTML,/共 33 题/);
+assert.match(page.innerHTML,/截图原题尚未逐字核对/);
+assert.doesNotMatch(page.innerHTML,/正确答案：/);
+assert.doesNotMatch(page.innerHTML,/<details class="written-answer" open/);
+click('load-more');click('load-more');
+for(const q of phoneChoices)assert.ok(page.innerHTML.includes('id="quiz-'+q.id+'"'),q.id);
+for(const q of phoneWritten)assert.ok(page.innerHTML.includes('id="'+q.id+'"'),q.id);
+assert.doesNotMatch(page.innerHTML,/quiz-exam-/);
+change('practice-type','choice');assert.match(page.innerHTML,/共 24 题/);
+change('practice-type','written');assert.match(page.innerHTML,/共 9 题/);
+change('practice-source','all');assert.match(page.innerHTML,/全部题库/);
+navigate('#/lesson/c-struct','结构体对齐与填充');
+assert.doesNotMatch(page.innerHTML,/正确答案：/);
+click('reveal',{id:'phone-padding'});
+assert.match(page.innerHTML,/正确答案：/);assert.match(page.innerHTML,/分步对照/);
+assert.match(page.innerHTML,/9～11/);
+console.log('PASS:',modules.length,'modules,',lessons.length,'lessons,',allQuestions.length,'choices',distribution,'displayed A/B/C/D,',writtenQuestions.length,'written,',challenges.length,'challenges; filters, phone exam, hidden solutions and canonical saved-answer grading.');

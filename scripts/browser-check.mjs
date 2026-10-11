@@ -269,6 +269,34 @@ try{
   assert.ok(await evaluate("document.querySelector('#challenge-solution').textContent.includes('int main(void)')"));
   assert.ok(await evaluate("document.querySelector('#challenge-solution').textContent.includes('stdio.h')"));
 
+  // 手机分享复述题：完整题集、显式揭示答案、草稿保持和手机表格。
+  await evaluate("location.hash='#/practice/phone'");await delay(120);
+  assert.ok(await evaluate("document.querySelector('.practice-toolbar').textContent.includes('共 33 题')"));
+  await evaluate("document.querySelector('[data-action=load-more]').click();document.querySelector('[data-action=load-more]').click()");
+  assert.equal(await evaluate("document.querySelectorAll('.quiz-card:not(.written-card)').length"),24);
+  assert.equal(await evaluate("document.querySelectorAll('.written-card').length"),9);
+  assert.equal(await evaluate("document.querySelectorAll('.quiz-card:not(.written-card) .quiz-answer').length"),0);
+  assert.equal(await evaluate("[...document.querySelectorAll('.written-answer')].every(d=>!d.open)"),true);
+  await evaluate("{const a=document.querySelector('#draft-phone-macro-expanded');a.value='先算右边，再做整数除法';a.dispatchEvent(new Event('input',{bubbles:true}));}");
+  await evaluate("document.querySelector('#phone-macro-expanded summary').click()");
+  assert.ok(await evaluate("document.querySelector('#phone-macro-expanded .quiz-answer').checkVisibility()"));
+  assert.ok(await evaluate("document.querySelector('#phone-macro-expanded .quiz-answer').textContent.includes('10/7')"));
+  await send('Emulation.setDeviceMetricsOverride',{width:1400,height:1000,deviceScaleFactor:1,mobile:false});
+  await evaluate("window.scrollTo(0,0)");await capture('phone-exam-desktop');
+  await evaluate("document.querySelector('#quiz-phone-padding [data-action=reveal]').click()");
+  assert.ok(await evaluate("document.querySelector('#quiz-phone-padding .answer-trace').checkVisibility()"));
+  assert.equal(await evaluate("document.querySelector('#draft-phone-macro-expanded').value"),'先算右边，再做整数除法');
+  await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});
+  await delay(350);
+  await evaluate("document.documentElement.style.scrollBehavior='auto';document.querySelector('#quiz-phone-padding').scrollIntoView({behavior:'instant',block:'start'})");
+  assert.ok(await evaluate("document.documentElement.scrollWidth<=innerWidth+1"),'phone exam mobile fits');
+  assert.ok(await evaluate("document.querySelector('.sidebar').getBoundingClientRect().right<=1"),'phone exam sidebar closed after transition');
+  await delay(150);
+  await capture('phone-exam-padding-mobile');
+  await send('Page.reload');await delay(250);
+  assert.equal(await evaluate("document.querySelector('#phone-macro-expanded .written-answer').open"),false);
+  assert.equal(await evaluate("document.querySelector('#draft-phone-macro-expanded').value"),'先算右边，再做整数除法');
+
   // 所有图解帧都无浏览器执行异常，且按钮可用；下面遍历所有课程检查真实 DOM。
   const {lessons}=await import('../dist/content.js');
   for(const l of lessons){

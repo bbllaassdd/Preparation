@@ -3,6 +3,7 @@ import {detailedAnswers} from './detailed-answers.js';
 import {beginnerLessons,beginnerPath} from './beginner-lessons.js';
 import {examChoices} from './exam-bank.js';
 import {expansionLessons,expansionSources} from './linux-expansion.js';
+import {phoneExamReferences} from './phone-exam.js';
 export const modules = [
   {id:'c', name:'C 语言', icon:'{ }', color:'#3775df', description:'类型、指针、数组与内存安全'},
   {id:'cpp', name:'C++', icon:'C+', color:'#8a63de', description:'对象生命周期与常用语法'},
@@ -861,6 +862,7 @@ for(const q of examChoices){
 }
 export {lessons};
 export const sources = [
+  ...phoneExamReferences,
   ...expansionSources,
   {name:'C++ 标准草案：虚函数',url:'https://eel.is/c++draft/class.virtual',note:'动态分派与覆盖规则；结合所用 C++ 标准版本学习'},
   {name:'C++ 标准草案：dynamic_cast',url:'https://eel.is/c++draft/expr.dynamic.cast',note:'运行时类型检查、失败与生命周期前提'},

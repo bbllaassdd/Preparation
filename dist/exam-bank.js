@@ -1,5 +1,6 @@
 // Original written-exam problems. Platform problems live in exam-challenges.js.
 import {expansionChoices,expansionWritten} from './linux-expansion.js';
+import {phoneChoices,phoneWritten} from './phone-exam.js';
 export const examChoices=[];
 export const writtenQuestions=[];
 // Append the new topic bank after existing entries to keep existing order stable.
@@ -87,3 +88,5 @@ W('project-budget','pr-robot','简答设计','周期控制任务的最坏时间�
 
 examChoices.push(...expansionChoices);
 writtenQuestions.push(...expansionWritten);
+examChoices.push(...phoneChoices);
+writtenQuestions.push(...phoneWritten);
