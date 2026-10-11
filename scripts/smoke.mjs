@@ -116,7 +116,7 @@ navigate('#/lesson/c-types','类型大小与数据模型');
 click('reveal',{id:q.id});
 assert.match(page.innerHTML,/正确答案：/);
 assert.match(page.innerHTML,/判断依据：/);
-navigate('#/review','全部错题 1');
+navigate('#/review','借助帮助 1');
 click('review-reset',{id:q.id});
 navigate('#/lesson/c-types','类型大小与数据模型');
 assert.doesNotMatch(page.innerHTML,/正确答案：/);
@@ -222,5 +222,5 @@ assert.match(page.innerHTML,/已标记熟练 1 \/ 8/);assert.doesNotMatch(page.i
 change('practice-type','choice');assert.match(page.innerHTML,/共 22 题/);
 change('practice-type','written');assert.match(page.innerHTML,/共 6 题/);
 change('practice-type','coding');assert.match(page.innerHTML,/共 4 题/);
-navigate('#/review','我的薄弱题');assert.match(page.innerHTML,/已标记熟练 1 \/ 8/);
+navigate('#/review','错题复习');click('review-filter',{value:'marked'});assert.match(page.innerHTML,/已标记熟练 1 \/ 8/);
 console.log('PASS:',modules.length,'modules,',lessons.length,'lessons,',allQuestions.length,'choices',distribution,'displayed A/B/C/D,',writtenQuestions.length,'written,',challenges.length,'challenges; filters, weak topic records, hidden solutions and canonical saved-answer grading.');

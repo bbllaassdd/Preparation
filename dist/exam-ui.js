@@ -5,7 +5,7 @@ export function answerTrace(q){
 }
 export function writtenCard(q,index,draft=''){
  return '<section class="quiz-card written-card" id="'+q.id+'">'+
- '<div class="quiz-head"><span class="quiz-num">'+(index+1)+'</span><span class="quiz-type">'+E(q.kind)+' · '+E(q.difficulty)+' · '+E(q.source)+'</span></div>'+
+ '<div class="quiz-head"><span class="quiz-num">'+(index+1)+'</span><span class="quiz-type">'+E(q.kind)+' · '+E(q.difficulty)+' · '+E(q.source)+'</span><button class="btn link knowledge-trigger" data-action="knowledge" data-id="'+q.id+'">相关知识点</button></div>'+
  '<h3>'+E(q.title)+'</h3><p class="quiz-prompt">'+E(q.prompt)+'</p>'+
  (q.originNote?'<p class="source-note">'+E(q.originNote)+'</p>':'')+
  (q.code?'<pre class="codeblock"><code>'+E(q.code)+'</code></pre>':'')+

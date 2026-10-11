@@ -28,10 +28,11 @@ try{
   await new Promise((resolve,reject)=>{socket.onopen=resolve;socket.onerror=reject;});
   let serial=0;const pending=new Map();
   socket.onmessage=ev=>{const v=JSON.parse(ev.data);if(v.id){const p=pending.get(v.id);pending.delete(v.id);v.error?p.reject(Error(v.error.message)):p.resolve(v.result);}else if(v.method==='Runtime.exceptionThrown')errors.push(v.params.exceptionDetails.text);};
-  const send=(method,params={})=>new Promise((resolve,reject)=>{const id=++serial;pending.set(id,{resolve,reject});socket.send(JSON.stringify({id,method,params}));});
+  const send=(method,params={})=>new Promise((resolve,reject)=>{const id=++serial;const timeout=setTimeout(()=>{pending.delete(id);reject(Error('CDP timeout: '+method));},20000);pending.set(id,{resolve:value=>{clearTimeout(timeout);resolve(value);},reject:error=>{clearTimeout(timeout);reject(error);}});socket.send(JSON.stringify({id,method,params}));});
   await send('Runtime.enable');await send('Page.enable');
   const evaluate=async expression=>{const r=await send('Runtime.evaluate',{expression,returnByValue:true,awaitPromise:true});if(r.exceptionDetails)throw Error(r.exceptionDetails.exception?.description||r.exceptionDetails.text);return r.result.value;};
   const open=async(id,width=1400,height=1000)=>{
+    if(id==='c-pointer'||id==='p-spi'||id==='c-sizeof')console.log('Browser check:',id,width);
     await send('Emulation.setDeviceMetricsOverride',{width,height,deviceScaleFactor:1,mobile:width<600});
     await send('Page.navigate',{url:`http://127.0.0.1:${port}/#/lesson/${id}`});
     for(let i=0;i<50;i++){if(await evaluate(`document.readyState==='complete' && !!document.querySelector('.worked-answer') && location.hash.includes('${id}')`))break;await delay(100);}
@@ -43,9 +44,9 @@ try{
   await evaluate("document.querySelector('.worked-answer summary').click()");
   assert.equal(await evaluate("document.querySelector('.worked-answer').open"),true);
   await evaluate("document.querySelector('.worked-answer summary').click()");
-  await evaluate("document.querySelector('[data-action=walk-next]').click()");
-  assert.equal(await evaluate("document.querySelector('.walkthrough').dataset.step"),'1');
-  await evaluate("document.querySelector('[data-action=walk-reset]').click(); document.querySelector('#diagram').scrollIntoView()");
+  await evaluate("document.querySelector('[data-player-action=next]').click()");
+  assert.equal(await evaluate("document.querySelector('.step-player').dataset.step"),'1');
+  await evaluate("document.querySelector('[data-player-action=reset]').click(); document.querySelector('#diagram').scrollIntoView()");
   const capture=async name=>{const r=await send('Page.captureScreenshot',{format:'png'});fs.writeFileSync(path.join(out,name+'.png'),Buffer.from(r.data,'base64'));};
   await capture('pointer-desktop');
   assert.equal(await evaluate("document.querySelectorAll('[data-action=lesson-view],[data-action=lesson-group]').length"),0);
@@ -335,6 +336,7 @@ try{
   assert.ok(await evaluate("document.documentElement.scrollWidth<=innerWidth+1"),'weak practice mobile has no page overflow');
   await capture('weak-code-mobile');
   await evaluate("location.hash='#/review'");await delay(100);
+  await evaluate("document.querySelector('[data-action=review-filter][data-value=marked]').click()");
   assert.ok(await evaluate("document.querySelector('.weak-summary').textContent.includes('已标记熟练 1 / 8')"));
 
   // 所有图解帧都无浏览器执行异常，且按钮可用；下面遍历所有课程检查真实 DOM。

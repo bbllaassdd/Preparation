@@ -7,7 +7,7 @@ export function codingWorkbench(c,draft,{inline=false}={}){
  const sample=(x,i)=>`<div class="sample-case"><span>样例 ${i+1}</span><h4>输入</h4><pre>${E(x.input||'(空输入)')}</pre><h4>输出</h4><pre>${E(x.output||'(无输出)')}</pre></div>`;
  return `<div class="coding-workbench" data-problem="${c.id}">
  <section class="problem-pane panel" aria-label="编程题目">
-   <div class="pane-heading"><span>题目说明</span><span class="problem-level">${E(c.level)} · ${E(c.language||c.kind)}</span></div>
+   <div class="pane-heading"><span>题目说明</span><button class="btn link" data-action="knowledge" data-id="${c.id}">相关知识点</button><span class="problem-level">${E(c.level)} · ${E(c.language||c.kind)}</span></div>
    <div class="problem-body"><p class="problem-origin">${E(c.source||'手写与场景练习')}</p><h2>${E(c.title)}</h2><p class="problem-prompt">${E(c.prompt)}</p>
    ${complete?`<div class="acm-format"><h3>${c.acm?'完整程序的输入输出格式':'输入输出格式'}</h3><h4>输入</h4><p>${E(program.input)}</p><h4>输出</h4><p>${E(program.output)}</p></div><h3>完整程序样例</h3>${program.tests.map(sample).join('')}${c.acm?`<details class="starter-detail"><summary>原函数题的接口边界样例</summary>${c.cases.map(x=>`<p>${E(x)}</p>`).join('')}</details>`:''}`:`<h3>样例与边界</h3>${c.cases.map((x,i)=>`<div class="sample-case"><span>样例 ${i+1}</span><p>${E(x)}</p></div>`).join('')}`}
    ${c.starter?`<details class="starter-detail"><summary>查看代码框架（不含答案）</summary><pre class="codeblock"><code>${E(c.starter)}</code></pre></details>`:''}
