@@ -7,6 +7,7 @@ export function writtenCard(q,index,draft=''){
  return '<section class="quiz-card written-card" id="'+q.id+'">'+
  '<div class="quiz-head"><span class="quiz-num">'+(index+1)+'</span><span class="quiz-type">'+E(q.kind)+' · '+E(q.difficulty)+' · '+E(q.source)+'</span></div>'+
  '<h3>'+E(q.title)+'</h3><p class="quiz-prompt">'+E(q.prompt)+'</p>'+
+ (q.originNote?'<p class="source-note">'+E(q.originNote)+'</p>':'')+
  (q.code?'<pre class="codeblock"><code>'+E(q.code)+'</code></pre>':'')+
  '<label class="written-label" for="draft-'+q.id+'">我的答案与推导</label>'+
  '<textarea id="draft-'+q.id+'" class="editor written-editor" data-draft="'+q.id+'" aria-label="'+E(q.title)+' 的答案草稿" placeholder="先写结果、理由或修改方案；草稿保存在当前浏览器。">'+E(draft)+'</textarea>'+

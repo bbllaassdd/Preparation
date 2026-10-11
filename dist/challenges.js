@@ -4,8 +4,10 @@ import {examChallenges} from './exam-challenges.js';
 import {lessonCoding} from './lesson-coding.js';
 import {expansionCoding} from './expansion-coding.js';
 import {acmBasics} from './acm-basics.js';
+import {weakCoding} from './weak-coding.js';
 export const challenges = [
   ...acmBasics,
+  ...weakCoding,
   ...expansionCoding,
   ...lessonCoding,
   ...examChallenges,

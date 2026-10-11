@@ -49,3 +49,5 @@
 
 /* Imported exam answer tables remain within the collapsed solution. */
 .phone-exam-note{padding:18px 22px;margin-bottom:18px}.phone-exam-note p{margin:8px 0 0;line-height:1.8;color:var(--muted,#64748b)}.answer-trace{max-width:100%;overflow-x:auto;margin:12px 0}.answer-trace table{width:100%;border-collapse:collapse;font-size:13px}.answer-trace th,.answer-trace td{padding:10px 12px;border:1px solid #dce5ef;text-align:left;vertical-align:top}.answer-trace th{background:#eef4fc}.answer-trace td{min-width:90px;white-space:normal}
+
+.weak-tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}.weak-group-head{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:28px 0 16px;padding-top:10px;border-top:2px solid #dce5ef}.weak-group-head h2{margin-bottom:6px}.weak-group-head p{margin:0;color:var(--muted);line-height:1.8;font-size:13px}.practice-list>.coding-workbench{margin:16px 0 28px}.weak-group-head .btn[aria-pressed=true]{background:#e6f5ef;color:#248466}@media(max-width:700px){.weak-group-head{align-items:flex-start;flex-direction:column}}

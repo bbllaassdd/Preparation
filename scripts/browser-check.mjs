@@ -238,9 +238,9 @@ try{
   await send('Emulation.setDeviceMetricsOverride',{width:1440,height:1000,deviceScaleFactor:1,mobile:false});
   await evaluate("location.hash='#/challenges/acm'");await delay(100);
   assert.equal(await evaluate("document.querySelector('.acm-guide').open"),false);
-  assert.equal(await evaluate("document.querySelectorAll('.course-card').length"),48);
+  assert.equal(await evaluate("document.querySelectorAll('.course-card').length"),52);
   await evaluate("{const s=document.querySelector('#coding-language');s.value='C11';s.dispatchEvent(new Event('change',{bubbles:true}));}");
-  assert.equal(await evaluate("document.querySelectorAll('.course-card').length"),24);
+  assert.equal(await evaluate("document.querySelectorAll('.course-card').length"),26);
   await evaluate("location.hash='#/challenge/acm-c-sum'");await delay(100);
   assert.equal(await evaluate("document.querySelector('#challenge-solution').checkVisibility()"),false);
   assert.equal(await evaluate("document.querySelector('[data-action=solution]').getAttribute('aria-expanded')"),'false');
@@ -296,6 +296,46 @@ try{
   await send('Page.reload');await delay(250);
   assert.equal(await evaluate("document.querySelector('#phone-macro-expanded .written-answer').open"),false);
   assert.equal(await evaluate("document.querySelector('#draft-phone-macro-expanded').value"),'先算右边，再做整数除法');
+
+  // 原题去重归档；多个内嵌编程答案只能展开各自的面板，草稿和熟练状态保留。
+  await send('Emulation.setDeviceMetricsOverride',{width:1440,height:1000,deviceScaleFactor:1,mobile:false});
+  await evaluate("location.hash='#/practice/weak'");await delay(150);
+  assert.ok(await evaluate("document.querySelector('.practice-toolbar').textContent.includes('共 32 题')"));
+  await evaluate("document.querySelector('[data-action=load-more]').click();document.querySelector('[data-action=load-more]').click()");
+  assert.equal(await evaluate("document.querySelectorAll('.weak-group-head').length"),8);
+  assert.equal(await evaluate("document.querySelectorAll('.coding-workbench').length"),4);
+  assert.equal(await evaluate("document.querySelectorAll('.quiz-card:not(.written-card) .quiz-answer').length"),0);
+  assert.equal(await evaluate("[...document.querySelectorAll('.challenge-solution')].every(e=>e.hidden)"),true);
+  assert.equal(await evaluate("[...document.querySelectorAll('.written-answer')].every(e=>!e.open)"),true);
+  const duplicateIds=await evaluate("(()=>{const ids=[...document.querySelectorAll('[id]')].map(e=>e.id);return ids.filter((id,i)=>ids.indexOf(id)!==i)})()");
+  assert.deepEqual(duplicateIds,[],'inline editors and solution IDs are unique');
+  await evaluate("{const e=document.querySelector('[data-draft=weak-code-relative]');e.value='#include <iostream>\\n// my relative pointer attempt';e.dispatchEvent(new Event('input',{bubbles:true}));}");
+  await evaluate("document.querySelector('[data-action=solution][data-id=weak-code-relative]').click()");
+  assert.equal(await evaluate("document.querySelector('#challenge-solution-weak-code-relative').hidden"),false);
+  assert.equal(await evaluate("document.querySelector('#challenge-solution-weak-code-insert').hidden"),true);
+  assert.equal(await evaluate("document.querySelector('#challenge-solution-weak-code-bit').hidden"),true);
+  await evaluate("document.querySelector('[data-action=hint][data-id=weak-code-bit]').click()");
+  assert.equal(await evaluate("document.querySelector('#challenge-hint-weak-code-bit').hidden"),false);
+  assert.equal(await evaluate("document.querySelector('#challenge-hint-weak-code-insert').hidden"),true);
+  await evaluate("document.querySelector('[data-action=weak-mastered][data-id=list]').click()");
+  assert.equal(await evaluate("JSON.parse(localStorage.getItem('embedded-study-v1')).weakMastered.list"),true);
+  assert.equal(await evaluate("document.querySelector('[data-draft=weak-code-relative]').value"),'#include <iostream>\n// my relative pointer attempt');
+  await evaluate("document.querySelector('#weak-original-macro summary').click()");
+  assert.ok(await evaluate("document.querySelector('#weak-original-macro .quiz-answer').checkVisibility()"));
+  await evaluate("document.documentElement.style.scrollBehavior='auto';document.querySelector('#weak-original-macro').scrollIntoView({behavior:'instant'})");
+  await capture('weak-macro-desktop');
+  await send('Page.reload');await delay(250);
+  assert.equal(await evaluate("document.querySelector('[data-action=weak-mastered][data-id=list]').getAttribute('aria-pressed')"),'true');
+  await evaluate("document.querySelector('[data-action=load-more]').click();document.querySelector('[data-action=load-more]').click()");
+  assert.equal(await evaluate("document.querySelector('#weak-original-macro .written-answer').open"),false);
+  assert.equal(await evaluate("document.querySelector('#challenge-solution-weak-code-relative').hidden"),true);
+  assert.equal(await evaluate("document.querySelector('[data-draft=weak-code-relative]').value"),'#include <iostream>\n// my relative pointer attempt');
+  await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});await delay(350);
+  await evaluate("document.documentElement.style.scrollBehavior='auto';document.querySelector('[data-problem=weak-code-relative]').scrollIntoView({behavior:'instant'})");
+  assert.ok(await evaluate("document.documentElement.scrollWidth<=innerWidth+1"),'weak practice mobile has no page overflow');
+  await capture('weak-code-mobile');
+  await evaluate("location.hash='#/review'");await delay(100);
+  assert.ok(await evaluate("document.querySelector('.weak-summary').textContent.includes('已标记熟练 1 / 8')"));
 
   // 所有图解帧都无浏览器执行异常，且按钮可用；下面遍历所有课程检查真实 DOM。
   const {lessons}=await import('../dist/content.js');
