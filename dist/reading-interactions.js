@@ -1,0 +1,16 @@
+let observer;
+let onScroll;
+const E=s=>s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+// Highlight text after escaping it; no course or draft text is ever evaluated.
+function syntax(code){const pattern=/(\/\*[\s\S]*?\*\/|\/\/[^\n]*|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|\b(?:int|char|void|const|static|unsigned|size_t|struct|return|if|else|while|for|class|public|virtual|explicit|double|float|auto|new|delete|nullptr|uint32_t|volatile|typedef|enum)\b|\b(?:0x[0-9a-fA-F]+|\d+(?:\.\d+)?)\b)/g;let html='',last=0;for(const match of code.matchAll(pattern)){html+=E(code.slice(last,match.index));const text=match[0],kind=text.startsWith('//')||text.startsWith('/*')?'comment':text[0]==='"'||text[0]==="'"?'string':/^\d/.test(text)?'number':'keyword';html+=`<span class="syntax-${kind}">${E(text)}</span>`;last=match.index+text.length;}return html+E(code.slice(last));}
+export function mountReading(container){
+ if(!container?.querySelectorAll)return;
+ observer?.disconnect();if(onScroll)window.removeEventListener('scroll',onScroll);onScroll=null;
+ container.querySelectorAll('pre.codeblock>code').forEach(el=>{if(el.closest('.step-player'))return;el.innerHTML=syntax(el.textContent);el.parentElement.classList.add('syntax-ready');});
+ container.querySelectorAll('.walkthrough').forEach(w=>{w.tabIndex=0;w.setAttribute('aria-label','图解推演，可用左右方向键逐步查看');w.addEventListener('keydown',event=>{if(event.target.matches('select,input,textarea'))return;if(event.key==='ArrowLeft'||event.key==='ArrowRight'){event.preventDefault();const action=event.key==='ArrowLeft'?'walk-prev':'walk-next',button=w.querySelector(`[data-action=${action}]:not([disabled])`);button?.click();container.querySelector('.walkthrough')?.focus({preventScroll:true});}});});
+ const nav=container.querySelector('.reading-outline'),article=container.querySelector('.article');if(!nav||!article)return;
+ const links=[...nav.querySelectorAll('[data-reading-anchor]')],sections=links.map(a=>document.getElementById(a.dataset.readingAnchor)).filter(Boolean);
+ const update=()=>{let current=sections[0];for(const section of sections)if(section.getBoundingClientRect().top<=180)current=section;links.forEach(a=>{const active=a.dataset.readingAnchor===current?.id;a.classList.toggle('reading-active',active);if(active)a.setAttribute('aria-current','location');else a.removeAttribute('aria-current');});const box=article.getBoundingClientRect(),travel=Math.max(1,box.height-window.innerHeight+160),progress=Math.max(0,Math.min(1,(160-box.top)/travel));nav.querySelector('.reading-progress i').style.transform=`scaleX(${progress})`;};
+ links.forEach(a=>a.addEventListener('click',event=>{event.preventDefault();const target=document.getElementById(a.dataset.readingAnchor);if(!target)return;target.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches||Math.abs(target.getBoundingClientRect().top)>innerHeight*1.5?'instant':'smooth',block:'start'});target.setAttribute('tabindex','-1');target.focus({preventScroll:true});}));
+ onScroll=()=>requestAnimationFrame(update);window.addEventListener('scroll',onScroll,{passive:true});observer=new IntersectionObserver(update,{rootMargin:'-120px 0px -65% 0px'});sections.forEach(s=>observer.observe(s));update();
+}

@@ -1,3 +1,4 @@
+import {depthReasoning} from './depth-reading.js';
 import {tutorials} from './tutorials.js';
 import {walkthroughs,spiWalkthrough} from './walkthroughs.js';
 import {beginnerWalkthroughs} from './beginner-walkthroughs.js';
@@ -9,10 +10,9 @@ export const walkthroughFor=(l,mode=0)=>l.id==='p-spi'?spiWalkthrough(mode):expa
 export const hasWalkthrough=l=>!!walkthroughFor(l);
 function foundation(l){return l.foundation?`<section class="topic-foundation" id="basics"><h2>先把基础讲清楚</h2>${l.foundation.map(s=>`<section><h3>${E(s.title)}</h3>${s.paragraphs.map(p=>`<p>${E(p)}</p>`).join('')}${s.table?`<div class="topic-table-scroll" tabindex="0" role="region" aria-label="${E(s.title)}"><table><thead><tr>${s.table.heads.map(h=>`<th scope="col">${E(h)}</th>`).join('')}</tr></thead><tbody>${s.table.rows.map(r=>`<tr>${r.map(c=>`<td>${E(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`:''}</section>`).join('')}</section>`:'';}
 export function explanation(l){
-  const t=tutorialFor(l);if(!t)return beginnerExplanation(l);
-  const steps=`<ol class="reason-steps">${t.steps.map((s,i)=>`<li><span class="reason-index">${i+1}</span><p>${E(s)}</p></li>`).join('')}</ol><div class="pitfall"><strong>容易混淆的地方</strong><p>${E(t.trap)}</p></div>`;
-  if(l.beginner||hasBeginnerNotes(l))return `${beginnerExplanation(l)}<details class="advanced-reasoning" id="why"><summary>从问题推到结论 · 学会例子后再看</summary><h3 class="reason-question">${E(t.question)}</h3>${steps}</details>`;
-  return `${foundation(l)}${beginnerExplanation(l)}<section class="reasoning" id="why"><h2>01 · 从问题推到结论</h2><h3 class="reason-question">${E(t.question)}</h3>${steps}</section>`;
+  const t=tutorialFor(l),primer=beginnerExplanation(l);
+  const extra=t?`<details class="advanced-reasoning" id="why"><summary>继续核对原理与常见误区</summary><h3 class="reason-question">${E(t.question)}</h3><ol class="reason-steps">${t.steps.map((s,i)=>`<li><span class="reason-index">${i+1}</span><p>${E(s)}</p></li>`).join('')}</ol><div class="pitfall"><strong>容易混淆的地方</strong><p>${E(t.trap)}</p></div></details>`:'';
+  return `${foundation(l)}${primer}${depthReasoning(l)}${extra}`;
 }
 export function workedExample(l){const t=tutorialFor(l);if(!t)return '';return `<section id="worked"><h2>推导例题 · 先自己想一遍</h2><div class="worked-example"><p class="worked-prompt">${E(t.worked.prompt)}</p><details class="worked-answer"><summary>查看解析与答案</summary><div><h3>逐步解析</h3><p>${E(t.worked.answer)}</p></div></details></div></section>`;}
 export function relatedReasoning(l){const t=tutorialFor(l);return t?`<details class="quiz-reason"><summary>展开本课原理，重新推导</summary><ol>${t.steps.map(s=>`<li>${E(s)}</li>`).join('')}</ol><p><strong>注意：</strong>${E(t.trap)}</p></details>`:'';}

@@ -4,6 +4,7 @@ import {beginnerLessons,beginnerPath} from './beginner-lessons.js';
 import {examChoices} from './exam-bank.js';
 import {expansionLessons,expansionSources} from './linux-expansion.js';
 import {phoneExamReferences} from './phone-exam.js';
+import {qualityQuestions} from './quality-questions.js';
 export const modules = [
   {id:'c', name:'C 语言', icon:'{ }', color:'#3775df', description:'类型、指针、数组与内存安全'},
   {id:'cpp', name:'C++', icon:'C+', color:'#8a63de', description:'对象生命周期与常用语法'},
@@ -855,7 +856,7 @@ lessons.push(lessons.splice(lessons.findIndex(l=>l.id==='n-linux'),1)[0]);
 const simpleSummaries={'c-types':'先学 sizeof 怎样求字节数，再比较不同平台的常见大小。','c-pointer':'指针保存地址；先读懂 &x、p、*p，再看怎样安全使用。','c-array':'数组存放多个同类型元素，先从下标与整个数组的大小学起。','c-struct':'结构体组合几个具名成员；先会访问成员，再计算存储大小。'};
 for(const l of lessons)if(simpleSummaries[l.id])l.summary=simpleSummaries[l.id];
 for(const l of lessons)for(const q of l.quiz)if(detailedAnswers[q.id])q.explain=detailedAnswers[q.id];
-for(const q of examChoices){
+for(const q of [...examChoices,...qualityQuestions]){
   const l=lessons.find(l=>l.id===q.lesson);
   if(!l)throw new Error('Missing exam lesson: '+q.lesson);
   l.quiz.push(q);

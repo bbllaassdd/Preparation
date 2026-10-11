@@ -13,13 +13,14 @@ import {expansionWalkthroughs} from '../dist/expansion-walkthroughs.js';
 import {phoneChoices,phoneWritten} from '../dist/phone-exam.js';
 import {weakGroups,weakOriginalIds,weakChoices,weakWritten} from '../dist/weak-focus.js';
 import {weakCoding} from '../dist/weak-coding.js';
+import {qualityQuestions} from '../dist/quality-questions.js';
 const allQuestions=lessons.flatMap(l=>l.quiz);
 assert.equal(expansionLessons.length,15);
 assert.equal(lessons.filter(l=>l.module==='linux').length,11);
 for(const l of expansionLessons){
  assert.ok(l.foundation.length>=3,l.id);
  assert.equal(l.quiz.filter(q=>!q.difficulty).length,3);
- assert.equal(l.quiz.filter(q=>q.difficulty).length,1);
+ assert.equal(l.quiz.filter(q=>q.difficulty&&!q.id.startsWith('quality-')).length,1);
 }
 for(const c of expansionCoding){
  assert.ok(lessons.some(l=>l.id===c.lesson));
@@ -33,7 +34,7 @@ assert.deepEqual(lessons.slice(0,beginnerPath.length).map(l=>l.id),beginnerPath)
 assert.equal(lessons.find(l=>l.id==='c-sizeof').quiz[0].answer,1);
 assert.equal(walkthroughFor(lessons.find(l=>l.id==='c-dereference')).frames.at(-1).watch[0][1],'7');
 assert.equal(new Set(allQuestions.map(q=>q.id)).size,allQuestions.length);
-assert.equal(allQuestions.length,lessons.length*3+examChoices.length);
+assert.equal(allQuestions.length,lessons.length*3+examChoices.length+qualityQuestions.length);
 const layouts=createOptionLayouts(allQuestions),distribution=[0,0,0,0];
 for(const q of allQuestions){
  const order=layouts.get(q.id);
@@ -73,7 +74,7 @@ for(let mode=0;mode<4;mode++){
   for(const f of frames.slice(1)){const sample=f.title.includes('：采样');assert.equal(sample,f.edge%2===(mode&1));}
 }
 
-const page={innerHTML:''},app={innerHTML:''};
+const page={innerHTML:'',dataset:{}},app={innerHTML:''};
 const docHandlers={},winHandlers={},memory=new Map(),webTools=new Map();
 globalThis.localStorage={getItem:key=>memory.get(key)||null,setItem:(key,value)=>memory.set(key,value)};
 globalThis.location={hash:'#/home'};
@@ -89,9 +90,9 @@ assert.deepEqual([...webTools.keys()],['list_study_lessons','open_study_lesson',
 assert.equal(webTools.get('list_study_lessons').execute({module:'c'}).length,lessons.filter(l=>l.module==='c').length);
 assert.throws(()=>webTools.get('list_study_lessons').execute({module:'bad'}));
 
-function navigate(hash,expected){globalThis.location.hash=hash;winHandlers.hashchange();const encoded=expected.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');assert.ok(page.innerHTML.includes(encoded),hash);}
+function navigate(hash,expected){globalThis.location.hash=hash;winHandlers.hashchange();const encoded=(hash.startsWith('#/lesson/')?expected.replace(/^\d+\s*·\s*/,''):expected).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');assert.ok(page.innerHTML.includes(encoded),hash);}
 for(const m of modules)navigate(`#/module/${m.id}`,m.name);
-for(const l of lessons){navigate(`#/lesson/${l.id}`,l.title);assert.match(page.innerHTML,/查看解析/);assert.match(page.innerHTML,/从问题推到结论/);assert.match(page.innerHTML,/<details class="worked-answer">/);assert.doesNotMatch(page.innerHTML,/<details class="worked-answer" open/);assert.doesNotMatch(page.innerHTML,/正确答案：/);}
+for(const l of lessons){navigate(`#/lesson/${l.id}`,l.title);assert.match(page.innerHTML,/查看解析/);assert.match(page.innerHTML,/从发生的过程理解结论/);assert.match(page.innerHTML,/<details class="worked-answer">/);assert.doesNotMatch(page.innerHTML,/<details class="worked-answer" open/);assert.doesNotMatch(page.innerHTML,/正确答案：/);}
 navigate('#/lesson/c-dereference','07 · *p：沿地址访问目标');
 assert.match(page.innerHTML,/声明 p 是指针/);
 assert.match(page.innerHTML,/两个数相乘/);
@@ -165,7 +166,7 @@ assert.doesNotMatch(page.innerHTML,/lesson-reading-view" hidden|data-action="les
 assert.match(page.innerHTML,/基础巩固/);
 assert.equal((page.innerHTML.match(/data-action="choose"/g)||[]).length,lessons.find(l=>l.id==='cpp-copy').quiz.length*4);
 assert.ok(page.innerHTML.indexOf('id="concept"')<page.innerHTML.indexOf('id="exercises"'));
-assert.ok(page.innerHTML.indexOf('id="exercises"')<page.innerHTML.indexOf('id="worked"'));
+assert.ok(page.innerHTML.indexOf('id="worked"')<page.innerHTML.indexOf('id="exercises"'),'instruction and worked example precede exercises');
 assert.ok(page.innerHTML.indexOf('id="exercises"')<page.innerHTML.indexOf('id="coding"'));
 assert.match(page.innerHTML,/代码编辑区/);
 change('lesson-coding-select','lab-deep-text',{lesson:'cpp-copy'});

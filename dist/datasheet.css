@@ -1,12 +1,12 @@
 /* Shared palette: components below refer to tokens, including animation state. */
 :root{
  --paper:#F4F1EA;--panel:#FAF8F2;--ink:#1B1F23;--ink-muted:#5D655F;--line:#CFC9B8;
- --nav-active:#E6E1D4;--track:#E2DCCB;--accent:#1F6B4F;--warn:#B4560A;--danger:#A32D2D;
+ --nav-active:#E6E1D4;--track:#E2DCCB;--accent:#1F6B4F;--warn:#9B4908;--danger:#A32D2D;
  --code:#EDE9DD;--accent-soft:#E7EDE3;--warn-soft:#F6E8D3;--danger-soft:#F6E5DF;
  --on-accent:#FAF8F2;--overlay:#1B1F2380;--focus:#1F6B4F;--shadow:none;
  --bg:var(--paper);--muted:var(--ink-muted);--blue:var(--accent);--blue-soft:var(--accent-soft);
  --green:var(--accent);--green-soft:var(--accent-soft);--orange:var(--warn);--orange-soft:var(--warn-soft);--red:var(--danger);--red-soft:var(--danger-soft);
- --body-font:'Noto Sans SC','Microsoft YaHei',system-ui,sans-serif;
+ --body-font:'Noto Sans SC','Microsoft YaHei','PingFang SC',system-ui,sans-serif;
  --mono-font:'IBM Plex Mono','Cascadia Code',Consolas,ui-monospace,monospace;
  font-family:var(--body-font);font-size:15px;line-height:1.7;color:var(--ink);font-variant-numeric:tabular-nums;
 }

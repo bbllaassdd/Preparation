@@ -1,3 +1,5 @@
+import {lessonDepth} from './learning-depth.js';
+import {qualityHelp} from './quality-questions.js';
 export const guidance={
  'c-address':{conclusion:'x 是内容，&x 是位置；问的是两件不同的事。',oral:'变量有类型、值和地址。x 读取变量的值，&x 取得这个变量的地址。给 x 赋值会修改它的内容；在对象存活期间，这不意味着把对象搬到另一个位置。',terms:[['地址','一个对象在内存中的位置。'],['对象','程序中保存数据的一块存储区域，这里可以先理解为变量对应的空间。']]},
  'c-pointer-declare':{conclusion:'指针也是变量，只是它保存的值是地址。',oral:'int *p = &x 声明一个指向 int 的指针 p，用 x 的地址初始化它。p 保存的地址、p 自己的地址 &p，以及目标的值 *p，是三个不同概念。只有指针指向有效对象时，才可以通过它访问目标。',terms:[['指针','保存地址的变量。'],['初始化','创建对象时给它第一个值。']]},
@@ -31,4 +33,4 @@ export const questionHelp={
  'c-dereference-q1':{hint:'先区分声明中的 * 与表达式中的 *。',thinking:'从 p 保存的地址找到目标，再判断表达式需要读取目标还是给目标写入。'},
  'c-pointer-declare-q1':{hint:'右边带有 &，取得的是位置。',thinking:'分开列出 x 的整数内容、x 的地址以及 p 保存的值；不要把三个量当作同一个量。'}
 };
-export function helpFor(q,l){const custom=questionHelp[q.id],base=moduleHints[l.module]||moduleHints.c;return {hint:custom?.hint||base[0],thinking:custom?.thinking||base[1],wrong:custom?.wrong,errorStep:custom?.errorStep};}
+export function helpFor(q,l){const custom=qualityHelp[q.id]||questionHelp[q.id],depth=lessonDepth[l.id],base=moduleHints[l.module]||moduleHints.c;return {hint:custom?.hint||depth?.question||base[0],thinking:custom?.thinking||depth?.method||base[1],wrong:custom?.wrong,errorStep:custom?.errorStep};}

@@ -190,7 +190,7 @@ try{
   assert.equal(await evaluate("document.querySelector('#challenge-solution').hidden"),true);
   assert.ok(await evaluate("document.querySelector('.workbench-editor').value.includes('longest_valley')"));
   assert.equal(await evaluate("document.querySelector('.lesson-reading-view').hidden"),false);
-  assert.ok(await evaluate("Math.abs(document.querySelector('#coding').getBoundingClientRect().top-85)<5"),'legacy coding link locates the same-page workbench');
+  assert.ok(await evaluate("Math.abs(document.querySelector('#coding').getBoundingClientRect().top-parseFloat(getComputedStyle(document.querySelector('#coding')).scrollMarginTop))<5 && document.querySelector('#coding').getBoundingClientRect().top>=document.querySelector('.reading-outline').getBoundingClientRect().bottom"),'legacy coding link locates workbench below the sticky reading outline');
 
   await evaluate("document.querySelector('[data-action=solution]').click()");
   assert.ok(await evaluate("document.querySelector('#challenge-solution').textContent.includes('down')"));
@@ -279,7 +279,7 @@ try{
   assert.equal(await evaluate("document.querySelectorAll('.quiz-card:not(.written-card) .quiz-answer').length"),0);
   assert.equal(await evaluate("[...document.querySelectorAll('.written-answer')].every(d=>!d.open)"),true);
   await evaluate("{const a=document.querySelector('#draft-phone-macro-expanded');a.value='先算右边，再做整数除法';a.dispatchEvent(new Event('input',{bubbles:true}));}");
-  await evaluate("document.querySelector('#phone-macro-expanded summary').click()");
+  await evaluate("document.querySelector('#phone-macro-expanded .written-answer>summary').click()");
   assert.ok(await evaluate("document.querySelector('#phone-macro-expanded .quiz-answer').checkVisibility()"));
   assert.ok(await evaluate("document.querySelector('#phone-macro-expanded .quiz-answer').textContent.includes('10/7')"));
   await send('Emulation.setDeviceMetricsOverride',{width:1400,height:1000,deviceScaleFactor:1,mobile:false});
@@ -321,7 +321,7 @@ try{
   await evaluate("document.querySelector('[data-action=weak-mastered][data-id=list]').click()");
   assert.equal(await evaluate("JSON.parse(localStorage.getItem('embedded-study-v1')).weakMastered.list"),true);
   assert.equal(await evaluate("document.querySelector('[data-draft=weak-code-relative]').value"),'#include <iostream>\n// my relative pointer attempt');
-  await evaluate("document.querySelector('#weak-original-macro summary').click()");
+  await evaluate("document.querySelector('#weak-original-macro .written-answer>summary').click()");
   assert.ok(await evaluate("document.querySelector('#weak-original-macro .quiz-answer').checkVisibility()"));
   await evaluate("document.documentElement.style.scrollBehavior='auto';document.querySelector('#weak-original-macro').scrollIntoView({behavior:'instant'})");
   await capture('weak-macro-desktop');
